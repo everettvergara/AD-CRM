@@ -1,0 +1,87 @@
+{
+    "card_out_folder": {
+        "label": "Card Output Folder:",
+        "type": "input_text",
+        "value": "cards"
+    },
+    "background_folder": {
+        "label": "Background Folder:",
+        "type": "input_text",
+        "value": "background"
+    },
+    "worksheet_out_folder": {
+        "label": "Worksheet Output Folder:",
+        "type": "input_text",
+        "value": "worksheets"
+    },
+    "version": {
+        "label": "Version:",
+        "type": "input_int",
+        "value": 1
+    },
+    "production_number": {
+        "label": "Current Production No.:",
+        "type": "input_int",
+        "value": 1
+    },
+    "production_font": {
+        "label": "Production Font:",
+        "type": "input_text",
+        "value": "Arial.ttf"
+    },
+    "production_font_size": {
+        "label": "Production Font Size:",
+        "type": "input_int",
+        "value": 32
+    },
+    "security_font": {
+        "label": "Security Font:",
+        "type": "input_text",
+        "value": "cour.ttf"
+    },
+    "security_font_size": {
+        "label": "Security Font Size:",
+        "type": "input_int",
+        "value": 32
+    },
+    "bingo_font": {
+        "label": "Bingo Font:",
+        "type": "input_text",
+        "value": "GILSANUB.TTF"
+    },
+    "bingo_font_size": {
+        "label": "BingoFont Size:",
+        "type": "input_int",
+        "value": 48
+    },
+    "width": {
+        "label": "Width (in\"):",
+        "type": "input_float",
+        "value": 6.0
+    },
+    "height": {
+        "label": "Height (in\"):",
+        "type": "input_float",
+        "value": 6.0
+    },
+    "has_grid": {
+        "label": "Has Grid?:",
+        "type": "checkbox",
+        "value": true
+    },
+    "pad_side": {
+        "label": "Padding Side (in\"):",
+        "type": "input_float",
+        "value": 0.6499999761581421
+    },
+    "pad_top": {
+        "label": "Padding Top (in\"):",
+        "type": "input_float",
+        "value": 1.100000023841858
+    },
+    "pad_bottom": {
+        "label": "Padding Bottom(in\"):",
+        "type": "input_float",
+        "value": 0.6499999761581421
+    }
+}
