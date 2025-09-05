@@ -5,33 +5,24 @@
 #include <unordered_map>
 #include <pjsua2.hpp>
 #include "PJAccount.h"
+#include "Common/NoCopyMove.hpp"
 
-namespace eg::net
+namespace eg::ad3
 {
-	class ServicePJAccount
+	class ServicePJAccount final :
+		public eg::sys::NoCopyMove
 	{
 	public:
+		PJAccount account;
 
 		static void init();
 		static ServicePJAccount& instance();
 		static void shutdown();
 
-		ServicePJAccount(const ServicePJAccount&) = delete;
-		ServicePJAccount(ServicePJAccount&&) noexcept = delete;
-		ServicePJAccount& operator=(const ServicePJAccount&) = delete;
-		ServicePJAccount& operator=(ServicePJAccount&&) = delete;
-		~ServicePJAccount() = default;
-
-		//PJAccount& mock_account();
-		PJAccount& auto_account();
-		PJAccount& account(const std::string&);
-
 	private:
 
-		ServicePJAccount();
+		ServicePJAccount() = default;
 
-		std::unordered_map<std::string, PJAccount> accounts_;
-		std::unordered_map<std::string, PJAccount>::iterator accounts_it_;
 		inline static std::unique_ptr<ServicePJAccount> instance_;
 	};
 }

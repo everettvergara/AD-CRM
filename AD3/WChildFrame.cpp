@@ -27,18 +27,28 @@ namespace eg::ad3
 		panel->SetSizer(sizer_header_buttons);
 	}
 
-	wxTextCtrl* WChildFrame::get_text_input(const std::string& code)
-	{
-		assert(controls_.contains(code));
-		return dynamic_cast<wxTextCtrl*>(controls_.at(code));
-	}
-
 	wxTextCtrl* WChildFrame::register_text_input(const std::string& code, const wxString& label, const wxString& def, const wxPoint& pos, const wxSize& size, long style)
 	{
 		assert(not controls_.contains(code));
 
 		auto* label_control = new wxStaticText(panel, wxID_ANY, label);
 		auto* input_control = new wxTextCtrl(panel, wxID_ANY, def, wxDefaultPosition, wxDefaultSize, style);
+
+		sizer_header->Add(label_control, 0, wxALIGN_CENTER_VERTICAL);
+		sizer_header->Add(input_control, 1, wxEXPAND);
+
+		controls_[code] = input_control;
+		return input_control;
+	}
+
+	wxCheckBox* WChildFrame::register_checkbox(const std::string& code, const wxString& label, bool def, const wxPoint& pos, const wxSize& size, long style)
+	{
+		assert(not controls_.contains(code));
+
+		auto* label_control = new wxStaticText(panel, wxID_ANY, label);
+		auto* input_control = new wxCheckBox(panel, wxID_ANY, "");
+
+		input_control->SetValue(def);
 
 		sizer_header->Add(label_control, 0, wxALIGN_CENTER_VERTICAL);
 		sizer_header->Add(input_control, 1, wxEXPAND);

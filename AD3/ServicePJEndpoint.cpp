@@ -1,9 +1,8 @@
 #include "ServicePJEndpoint.h"
+
 #include <cassert>
 #include "ConfigSettings.hpp"
-//#include "Log.hpp"
-//#include "Config.hpp"
-//#include "PJHelper.h"
+#include "Common/Log.hpp"
 
 namespace eg::ad3
 {

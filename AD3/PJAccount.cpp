@@ -1,60 +1,47 @@
 #include "PJAccount.h"
 
 #include <format>
-#include "ConfigSIP.hpp"
+#include "Common/Log.hpp"
+#include "Common/ServiceCtrlC.h"
+#include "ConfigSettings.hpp"
 
-#include "ServiceCtrlC.h"
-
-#include "Log.hpp"
-#include "Config.hpp"
-
-namespace eg::net
+namespace eg::ad3
 {
-	PJAccount::PJAccount(const std::string* code) :
-		account_code(code),
+	PJAccount::PJAccount() :
 		is_registered(false),
 		failed_registration_ctr_(0)
 	{
 		LOG_INSTANCE;
-		LOG_I("PJAccount::PJAccount: {}", *account_code);
 
 		this->create([this]
 			{
 				pj::AccountConfig account_config{};
-				const auto& sip_config = sys::Config<ConfigSIP>::instance().configs.at(*account_code);
+				const auto& settings = ConfigSettings::instance();
 
-				account_config.idUri = std::format(k_pj_sip_user_server_format, sip_config.server_user, sip_config.server_name);
-				account_config.regConfig.timeoutSec = sip_config.server_timeout_sec;
-				account_config.regConfig.registrarUri = std::format(k_pj_sip_server_port_no_format, sip_config.server_name, sip_config.server_port_no);
-				account_config.regConfig.registerOnAdd = sip_config.account_register_on_add;
-				account_config.sipConfig.authCreds.emplace_back("digest", "*", sip_config.server_user, 0, sip_config.server_password);
-				account_config.natConfig.udpKaIntervalSec = sip_config.server_keep_alive_sec;
-				account_config.natConfig.udpKaData = sip_config.server_keep_alive_data;
-				//account_config.callConfig.prackUse = PJSUA_100REL_MANDATORY; // Support 100rel
+				account_config.idUri = std::format(k_pj_sip_user_server_format, settings.sip_id, settings.server_ip);
+				account_config.regConfig.timeoutSec = settings.server_timeout_secs;
+				account_config.regConfig.registrarUri = std::format(k_pj_sip_server_port_no_format, settings.server_ip, settings.server_port);
+				account_config.regConfig.registerOnAdd = settings.register_on_add;
+				account_config.sipConfig.authCreds.emplace_back("digest", "*", settings.sip_id, 0, settings.sip_password);
+				account_config.natConfig.udpKaIntervalSec = settings.server_keep_alive_secs;
+				account_config.natConfig.udpKaData = settings.server_keep_alive_data;
+
 				return account_config;
 			}());
 
-		//if ()
 		wait_until_registered_or_signal_exit();
-	}
-
-	PJAccount::~PJAccount()
-	{
-		this->shutdown();
 	}
 
 	void PJAccount::wait_until_registered_or_signal_exit()
 	{
-		LOG_INSTANCE;
-		LOG_I("PJAccount::wait_until_registered:");
-
-		if (std::get<bool>(eg::global::get("mock")))
+		LOG_II("PJAccount::wait_until_registered:");
+		if (ConfigSettings::instance().mock)
 		{
+			LOG_II("PJAccount::wait_until_registered: Mock mode detected.");
 			return;
 		}
 
 		auto& ctrlc = sys::ServiceCtrlC::instance();
-
 		ctrlc.register_cv("pjaccount_register_wait", &cv_);
 
 		std::unique_lock lock(mutex_);
@@ -76,7 +63,6 @@ namespace eg::net
 		if (is_registered)
 		{
 			LOG_I("account::onRegState: Account registration successful.");
-
 			failed_registration_ctr_ = 0;
 			cv_.notify_one();
 		}
@@ -85,7 +71,7 @@ namespace eg::net
 			++failed_registration_ctr_;
 			LOG_X("account::onRegState: Registration failed: {}", static_cast<int>(prm.code));
 
-			if (failed_registration_ctr_ == sys::Config<ConfigSIP>::instance().configs.at(*account_code).server_max_registration_attempt)
+			if (failed_registration_ctr_ == ConfigSettings::instance().max_registration_attempts)
 			{
 				LOG_X("Max registration failed. Signaling exit.");
 

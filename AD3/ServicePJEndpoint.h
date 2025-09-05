@@ -10,7 +10,8 @@ namespace eg::ad3
 	inline constexpr unsigned int k_endpoint_port_no = 5060;
 	inline constexpr auto k_pj_null_device = "null device";
 
-	class ServicePJEndpoint : public eg::sys::NoCopyMove
+	class ServicePJEndpoint final :
+		public eg::sys::NoCopyMove
 	{
 	public:
 		pj::Endpoint ep;
