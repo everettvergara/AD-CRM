@@ -1,11 +1,13 @@
 #include <wx/wx.h>
 
-#include "AppRegister.hpp"
-#include "ComInitializer.hpp"
+#include "Common/AppRegister.hpp"
+#include "Common/ComInitializer.hpp"
+#include "Common/Log.hpp"
+#include "ConfigSettings.hpp"
 
 #include "WAppAD3.hpp"
 
-static constexpr auto k_app_name = "AD3.0";
+static constexpr auto k_app_name = "AD3";
 
 wxIMPLEMENT_APP_NO_MAIN(eg::ad3::WAppAD3);
 
@@ -15,6 +17,9 @@ int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow)
 	{
 		eg::sys::AppRegister app_register(k_app_name);
 		eg::sys::ComInitializer com_initializer(COINIT_APARTMENTTHREADED);
+
+		eg::sys::Log::init(k_app_name);
+		eg::sys::Config<eg::ad3::ConfigSettings>::init(eg::ad3::k_settings_filename);
 
 		wxApp::SetInstance(new eg::ad3::WAppAD3);
 		if (not wxEntryStart(hInst))

@@ -2,7 +2,7 @@
 
 #include "WMDIParentFrame.h"
 
-#include "WSettings.hpp"
+#include "WConfigSettings.hpp"
 
 namespace eg::ad3
 {
@@ -32,7 +32,7 @@ namespace eg::ad3
 			const char* id = "settings";
 			if (not is_child_active(id))
 			{
-				//child_ids[id] = new WSettings(this);
+				child_ids[id] = new WConfigSettings(this);
 				return;
 			}
 		}

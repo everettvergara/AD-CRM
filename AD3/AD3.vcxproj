@@ -69,6 +69,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="PropertySheet1.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -105,13 +106,14 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(CPP_LIBS)/spdlog/include;$(CPP_LIBS)/json/include;$(CPP_LIBS)/pjproject/pjsip/include;$(CPP_LIBS)/pjproject/pjlib-util/include;$(CPP_LIBS)/pjproject/pjmedia/include;$(CPP_LIBS)/pjproject/pjnath/include;$(CPP_LIBS)/pjproject/pjlib/include;$(CPP_LIBS)/pjproject/third_party/include;$(CPP_LIBS)/wxWidgets/include;$(CPP_LIBS)/wxWidgets/lib/debug/vc_x64_lib/mswud;$(CPP_LIBS)/Common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CPP_LIBS)/spdlog/include;$(CPP_LIBS)/json/include;$(CPP_LIBS)/pjproject/pjsip/include;$(CPP_LIBS)/pjproject/pjlib-util/include;$(CPP_LIBS)/pjproject/pjmedia/include;$(CPP_LIBS)/pjproject/pjnath/include;$(CPP_LIBS)/pjproject/pjlib/include;$(CPP_LIBS)/pjproject/third_party/include;$(CPP_LIBS)/wxWidgets/include;$(CPP_LIBS)/wxWidgets/lib/debug/vc_x64_lib/mswud;$(CPP_LIBS)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CPP_LIBS)/spdlog/lib/$(Platform)/$(Configuration);$(CPP_LIBS)/pjproject/pjsip/lib;$(CPP_LIBS)/pjproject/pjlib-util/lib;$(CPP_LIBS)/pjproject/pjmedia/lib;$(CPP_LIBS)/pjproject/pjnath/lib;$(CPP_LIBS)/pjproject/pjlib/lib;$(CPP_LIBS)/pjproject/third_party/lib;$(CPP_LIBS)/wxWidgets/lib/$(Configuration)/vc_x64_lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>spdlog.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsua-lib-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-ua-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-audiodev-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-videodev-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-codec-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/third_party/lib/libsrtp-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/third_party/lib/libresample-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjnath/lib/pjnath-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjlib-util/lib/pjlib-util-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjlib/lib/pjlib-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;wxexpat$(WXSuffix).lib;wxjpeg$(WXSuffix).lib;wxlexilla$(WXSuffix).lib;wxmsw33u$(WXSuffix).lib;wxpng$(WXSuffix).lib;wxregexu$(WXSuffix).lib;wxscintilla$(WXSuffix).lib;wxsharpyuv.lib;wxtiff$(WXSuffix).lib;wxwebp.lib;wxwebpdemux.lib;wxzlib$(WXSuffix).lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>spdlog.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsua-lib-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-ua-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-audiodev-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-videodev-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-codec-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/third_party/lib/libsrtp-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/third_party/lib/libresample-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjnath/lib/pjnath-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjlib-util/lib/pjlib-util-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjlib/lib/pjlib-x86_64-x64-vc14-$(PJSuffix).lib;wxexpat$(WXSuffix).lib;wxjpeg$(WXSuffix).lib;wxlexilla$(WXSuffix).lib;wxmsw33u$(WXSuffix).lib;wxpng$(WXSuffix).lib;wxregexu$(WXSuffix).lib;wxscintilla$(WXSuffix).lib;wxsharpyuv.lib;wxtiff$(WXSuffix).lib;wxwebp.lib;wxwebpdemux.lib;wxzlib$(WXSuffix).lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -124,28 +126,29 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(CPP_LIBS)/spdlog/include;$(CPP_LIBS)/json/include;$(CPP_LIBS)/pjproject/pjsip/include;$(CPP_LIBS)/pjproject/pjlib-util/include;$(CPP_LIBS)/pjproject/pjmedia/include;$(CPP_LIBS)/pjproject/pjnath/include;$(CPP_LIBS)/pjproject/pjlib/include;$(CPP_LIBS)/pjproject/third_party/include;$(CPP_LIBS)/wxWidgets/include;$(CPP_LIBS)/wxWidgets/lib/debug/vc_x64_lib/mswud;$(CPP_LIBS)/Common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CPP_LIBS)/spdlog/include;$(CPP_LIBS)/json/include;$(CPP_LIBS)/pjproject/pjsip/include;$(CPP_LIBS)/pjproject/pjlib-util/include;$(CPP_LIBS)/pjproject/pjmedia/include;$(CPP_LIBS)/pjproject/pjnath/include;$(CPP_LIBS)/pjproject/pjlib/include;$(CPP_LIBS)/pjproject/third_party/include;$(CPP_LIBS)/wxWidgets/include;$(CPP_LIBS)/wxWidgets/lib/debug/vc_x64_lib/mswud;$(CPP_LIBS)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>spdlog.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsua-lib-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-ua-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-audiodev-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-videodev-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-codec-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/third_party/lib/libsrtp-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/third_party/lib/libresample-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjnath/lib/pjnath-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjlib-util/lib/pjlib-util-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;$(CPP_LIBS)/pjproject/pjlib/lib/pjlib-x86_64-x64-vc14-$(Configuration)-Dynamic.lib;wxexpat$(WXSuffix).lib;wxjpeg$(WXSuffix).lib;wxlexilla$(WXSuffix).lib;wxmsw33u$(WXSuffix).lib;wxpng$(WXSuffix).lib;wxregexu$(WXSuffix).lib;wxscintilla$(WXSuffix).lib;wxsharpyuv.lib;wxtiff$(WXSuffix).lib;wxwebp.lib;wxwebpdemux.lib;wxzlib$(WXSuffix).lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>spdlog.lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsua-lib-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-ua-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-audiodev-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-videodev-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-codec-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjmedia/lib/pjmedia-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/third_party/lib/libsrtp-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/third_party/lib/libresample-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjnath/lib/pjnath-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjlib-util/lib/pjlib-util-x86_64-x64-vc14-$(PJSuffix).lib;$(CPP_LIBS)/pjproject/pjlib/lib/pjlib-x86_64-x64-vc14-$(PJSuffix).lib;wxexpat$(WXSuffix).lib;wxjpeg$(WXSuffix).lib;wxlexilla$(WXSuffix).lib;wxmsw33u$(WXSuffix).lib;wxpng$(WXSuffix).lib;wxregexu$(WXSuffix).lib;wxscintilla$(WXSuffix).lib;wxsharpyuv.lib;wxtiff$(WXSuffix).lib;wxwebp.lib;wxwebpdemux.lib;wxzlib$(WXSuffix).lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CPP_LIBS)/spdlog/lib/$(Platform)/$(Configuration);$(CPP_LIBS)/pjproject/pjsip/lib;$(CPP_LIBS)/pjproject/pjlib-util/lib;$(CPP_LIBS)/pjproject/pjmedia/lib;$(CPP_LIBS)/pjproject/pjnath/lib;$(CPP_LIBS)/pjproject/pjlib/lib;$(CPP_LIBS)/pjproject/third_party/lib;$(CPP_LIBS)/wxWidgets/lib/$(Configuration)/vc_x64_lib;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AD3.cpp" />
     <ClCompile Include="WChildFrame.cpp" />
-    <ClCompile Include="WChildFrameJSONSettings.cpp" />
     <ClCompile Include="WMDIParentFrame.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConfigSettings.hpp" />
     <ClInclude Include="WApp.h" />
     <ClInclude Include="WAppAD3.hpp" />
     <ClInclude Include="WChildFrame.h" />
-    <ClInclude Include="WChildFrameJSONSettings.h" />
     <ClInclude Include="WMDIParentFrame.h" />
     <ClInclude Include="WMDIParentFrameAD3.hpp" />
-    <ClInclude Include="WSettings.hpp" />
+    <ClInclude Include="WConfigSettings.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

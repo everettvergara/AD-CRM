@@ -24,9 +24,6 @@
     <ClCompile Include="WChildFrame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WChildFrameJSONSettings.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WApp.h">
@@ -38,7 +35,7 @@
     <ClInclude Include="WChildFrame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WSettings.hpp">
+    <ClInclude Include="WConfigSettings.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WAppAD3.hpp">
@@ -47,7 +44,7 @@
     <ClInclude Include="WMDIParentFrameAD3.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WChildFrameJSONSettings.h">
+    <ClInclude Include="ConfigSettings.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

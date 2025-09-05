@@ -23,6 +23,16 @@ namespace eg::ad3
 
 	bool WMDIParentFrame::is_child_active(const char* id) const
 	{
-		return child_ids.contains(id);
+		auto find = child_ids.find(id);
+		if (find == child_ids.end())
+		{
+			return false;
+		}
+		if (not find->second)
+		{
+			return false;
+		}
+
+		return true;
 	}
 }
