@@ -44,8 +44,10 @@ namespace eg::ad3
 			return dynamic_cast<T*>(controls_.at(code));
 		}
 
+		wxStaticText* register_text(const wxString& text, int wrap, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
 		wxTreeCtrl* register_tree(const std::string& code, int width, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxTR_DEFAULT_STYLE | wxTR_HAS_BUTTONS | wxTR_LINES_AT_ROOT);
 		wxTextCtrl* register_text_input(const std::string& code, const wxString& label, const wxString& def = "", const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
+		wxTextCtrl* register_text_input_multi(const std::string& code, const wxString& label, int lines = 5, const wxString& def = "", const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
 		wxCheckBox* register_checkbox(const std::string& code, const wxString& label, bool def = false, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
 		wxButton* register_button(const wxString& label, int id = wxID_ANY);
 

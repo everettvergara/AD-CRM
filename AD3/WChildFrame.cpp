@@ -50,6 +50,42 @@ namespace eg::ad3
 		return input_control;
 	}
 
+	wxTextCtrl* WChildFrame::register_text_input_multi(const std::string& code, const wxString& label, int lines, const wxString& def, const wxPoint& pos, const wxSize& size, long style)
+	{
+		assert(not controls_.contains(code));
+
+		auto* label_control = new wxStaticText(panel, wxID_ANY, label);
+		auto* input_control = new wxTextCtrl(panel, wxID_ANY, def, wxDefaultPosition, wxDefaultSize, style | wxTE_MULTILINE | wxTE_WORDWRAP);
+
+		wxClientDC dc(input_control);
+		dc.SetFont(input_control->GetFont());
+		const int line_height = dc.GetCharHeight();
+		const int height = line_height * lines + k_border;
+
+		input_control->SetMinSize(wxSize(-1, height));
+		input_control->SetMaxSize(wxSize(-1, height));
+
+		sizer_fields->Add(label_control, 0, wxALIGN_CENTER_VERTICAL);
+		sizer_fields->Add(input_control, 1, wxEXPAND);
+
+		controls_[code] = input_control;
+		return input_control;
+	}
+	wxStaticText* WChildFrame::register_text(const wxString& text, int wrap, const wxPoint& pos, const wxSize& size, long style)
+	{
+		//assert(not controls_.contains(code));
+
+		auto* label_control = new wxStaticText(panel, wxID_ANY, "");
+		auto* text_control = new wxStaticText(panel, wxID_ANY, text, pos, size, style);
+
+		text_control->Wrap(wrap);
+
+		sizer_fields->Add(label_control, 0, wxALIGN_CENTER_VERTICAL);
+		sizer_fields->Add(text_control, 1, wxEXPAND);
+
+		return text_control;
+	}
+
 	wxTreeCtrl* WChildFrame::register_tree(const std::string& code, int width, const wxPoint& pos, const wxSize& size, long style)
 	{
 		assert(not controls_.contains(code));

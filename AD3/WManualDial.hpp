@@ -6,6 +6,8 @@
 
 namespace eg::ad3
 {
+	constexpr auto k_manual_folder = "manual";
+
 	class WManualDial :
 		public WChildFrame
 	{
@@ -29,11 +31,24 @@ namespace eg::ad3
 			const auto& settings = ConfigSettings::instance();
 
 			register_tree("history", 200);
-			register_text_input("mobile", "Mobile to dial:", settings.server_ip);
+
+			register_text("Please input mobile in the following format: 0XXXYYYZZZZ i.e. 09177101995.", 300);
+			register_text_input("mobile", "Mobile to dial:", "")->SetHint("09177101995");
+			register_text_input("name", "Name:", "")->SetHint("Juan dela Cruz");
+			register_text_input_multi("remarks", "Remarks:", 10)->SetHint("Enter details of your conversation here...");
 
 			register_button("Call", wxID_OK)->Bind(wxEVT_BUTTON, &WManualDial::on_ok_, this);
 			register_button("Stop", wxID_ANY)->Bind(wxEVT_BUTTON, &WManualDial::on_cancel_, this);
+			register_button("Save", wxID_OK)->Bind(wxEVT_BUTTON, &WManualDial::on_cancel_, this);
 			register_button("Cancel", wxID_CANCEL)->Bind(wxEVT_BUTTON, &WManualDial::on_cancel_, this);
+
+			if (not std::filesystem::exists(k_manual_folder))
+			{
+				if (not std::filesystem::create_directory(k_manual_folder))
+				{
+					throw std::runtime_error("Could not create the manual folder.");
+				}
+			}
 
 			Show(true);
 		}
