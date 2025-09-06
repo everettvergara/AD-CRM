@@ -2,6 +2,7 @@
 
 #include <string>
 #include <wx/wx.h>
+#include <wx/treectrl.h>
 
 namespace eg::ad3
 {
@@ -17,6 +18,7 @@ namespace eg::ad3
 		wxSize size = wxDefaultSize;
 		long style = wxDEFAULT_FRAME_STYLE;
 		int form_columns = 2;
+		bool has_tree = false;
 	};
 
 	class WChildFrame :
@@ -30,7 +32,9 @@ namespace eg::ad3
 
 		wxPanel* panel;
 		wxBoxSizer* sizer_header_buttons;
-		wxFlexGridSizer* sizer_header;
+		wxBoxSizer* sizer_tree_fields;
+		wxBoxSizer* sizer_tree;
+		wxFlexGridSizer* sizer_fields;
 		wxBoxSizer* sizer_buttons;
 
 		template<typename T>
@@ -40,6 +44,7 @@ namespace eg::ad3
 			return dynamic_cast<T*>(controls_.at(code));
 		}
 
+		wxTreeCtrl* register_tree(const std::string& code, int width, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxTR_DEFAULT_STYLE | wxTR_HAS_BUTTONS | wxTR_LINES_AT_ROOT);
 		wxTextCtrl* register_text_input(const std::string& code, const wxString& label, const wxString& def = "", const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
 		wxCheckBox* register_checkbox(const std::string& code, const wxString& label, bool def = false, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
 		wxButton* register_button(const wxString& label, int id = wxID_ANY);

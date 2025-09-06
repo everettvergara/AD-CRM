@@ -52,7 +52,7 @@ namespace eg::ad3
 			server_keep_alive_secs(data.value("server_timeout_secs", 10u)),
 			server_keep_alive_data(data.value("server_keep_alive_data", R"(\r\n)")),
 			register_on_add(data.value("register_on_add", false)),
-			mock(data.value("register_on_add", true))
+			mock(data.value("mock", true))
 
 		{
 		}

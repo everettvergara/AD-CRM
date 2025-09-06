@@ -153,6 +153,7 @@
     <ClInclude Include="WApp.h" />
     <ClInclude Include="WAppAD3.hpp" />
     <ClInclude Include="WChildFrame.h" />
+    <ClInclude Include="WManualDial.hpp" />
     <ClInclude Include="WMDIParentFrame.h" />
     <ClInclude Include="WMDIParentFrameAD3.hpp" />
     <ClInclude Include="WConfigSettings.hpp" />

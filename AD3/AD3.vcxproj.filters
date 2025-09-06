@@ -68,5 +68,8 @@
     <ClInclude Include="ServicePJAccount.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WManualDial.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

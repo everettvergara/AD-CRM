@@ -18,11 +18,12 @@ namespace eg::ad3
 					.parent = parent,
 					.title = "AD3.0 Settings",
 					.pos = wxDefaultPosition,
-					.size = wxSize(300, 500),
+					.size = wxSize(400, 450),
 					.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
 					.form_columns = 2,
+					.has_tree = false
 				}
-				)
+			)
 
 		{
 			const auto& settings = ConfigSettings::instance();
