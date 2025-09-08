@@ -36,6 +36,12 @@
     <ClCompile Include="..\..\..\Libs\Common\ServiceCtrlC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PJCall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PJHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WApp.h">
@@ -69,6 +75,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WManualDial.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PJCall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PJHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PJCallManualDial.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

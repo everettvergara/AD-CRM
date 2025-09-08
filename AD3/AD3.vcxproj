@@ -108,6 +108,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(CPP_LIBS)/spdlog/include;$(CPP_LIBS)/json/include;$(CPP_LIBS)/pjproject/pjsip/include;$(CPP_LIBS)/pjproject/pjlib-util/include;$(CPP_LIBS)/pjproject/pjmedia/include;$(CPP_LIBS)/pjproject/pjnath/include;$(CPP_LIBS)/pjproject/pjlib/include;$(CPP_LIBS)/pjproject/third_party/include;$(CPP_LIBS)/wxWidgets/include;$(CPP_LIBS)/wxWidgets/lib/debug/vc_x64_lib/mswud;$(CPP_LIBS)</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -128,6 +129,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(CPP_LIBS)/spdlog/include;$(CPP_LIBS)/json/include;$(CPP_LIBS)/pjproject/pjsip/include;$(CPP_LIBS)/pjproject/pjlib-util/include;$(CPP_LIBS)/pjproject/pjmedia/include;$(CPP_LIBS)/pjproject/pjnath/include;$(CPP_LIBS)/pjproject/pjlib/include;$(CPP_LIBS)/pjproject/third_party/include;$(CPP_LIBS)/wxWidgets/include;$(CPP_LIBS)/wxWidgets/lib/debug/vc_x64_lib/mswud;$(CPP_LIBS)</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -140,6 +142,8 @@
     <ClCompile Include="..\..\..\Libs\Common\ServiceCtrlC.cpp" />
     <ClCompile Include="AD3.cpp" />
     <ClCompile Include="PJAccount.cpp" />
+    <ClCompile Include="PJCall.cpp" />
+    <ClCompile Include="PJHelper.cpp" />
     <ClCompile Include="ServicePJAccount.cpp" />
     <ClCompile Include="ServicePJEndpoint.cpp" />
     <ClCompile Include="WChildFrame.cpp" />
@@ -148,6 +152,9 @@
   <ItemGroup>
     <ClInclude Include="ConfigSettings.hpp" />
     <ClInclude Include="PJAccount.h" />
+    <ClInclude Include="PJCall.h" />
+    <ClInclude Include="PJCallManualDial.hpp" />
+    <ClInclude Include="PJHelper.h" />
     <ClInclude Include="ServicePJAccount.h" />
     <ClInclude Include="ServicePJEndpoint.h" />
     <ClInclude Include="WApp.h" />

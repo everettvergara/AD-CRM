@@ -11,59 +11,36 @@
 #include <chrono>
 
 #include "PJAccount.h"
+#include "Common/NoCopyMove.hpp"
 
-namespace eg::net
+namespace eg::ad3
 {
-	struct PJCallAMP : public pj::AudioMediaPlayer
-	{
-		std::function<void()> play_complete;
+	constexpr auto k_pj_call_timeout_secs = 30;
 
-		void onEof2() override
-		{
-			if (play_complete)
-			{
-				play_complete();
-			}
-		}
-	};
-
-	class PJCall : public pj::Call, public std::enable_shared_from_this<PJCall>
+	class PJCall :
+		public pj::Call,
+		public sys::NoCopyMove
 	{
 	public:
-		using RemoveHandler = std::function<void(std::shared_ptr<PJCall>)>;
-		template <typename T>
-		static std::shared_ptr<PJCall> create(PJAccount& account, std::chrono::seconds timeout_secs, nlohmann::json j, RemoveHandler remove_handler)
-		{
-			return std::shared_ptr<PJCall>(new T(account, timeout_secs, std::move(j), std::move(remove_handler)));
-		}
 
-		PJCall(PJAccount& account, std::chrono::seconds timeout_secs, nlohmann::json call_request, RemoveHandler remove_handler);
+		PJCall(PJAccount& account);
 		virtual ~PJCall();
-
-		PJCall() = delete;
-		PJCall(const PJCall&) = delete;
-		PJCall(PJCall&&) = delete;
-		PJCall& operator=(const PJCall&) = delete;
-		PJCall& operator=(PJCall&&) = delete;
 
 		void wait_until_state_is_disconnected();
 		void hangup_call();
+
 		std::optional<pj::AudioMedia> get_active_media(const pj::CallInfo&);
 
 	protected:
 
-		pjsip_inv_state last_call_state_;
-		pjsip_inv_state last_call_state_before_disconnected_;
-
-		nlohmann::json call_request_;
-		RemoveHandler remove_handler_;
-		std::chrono::seconds timeout_secs_;
+		volatile pjsip_inv_state last_call_state;
 
 		void onCallState(pj::OnCallStateParam&) override;
 		void onCallMediaState(pj::OnCallMediaStateParam&) override;
 
-		virtual void on_call_state_disconnected_();
-		virtual void on_call_media_state_on_confirmed_(pj::AudioMedia&);
+		virtual void on_user_call_state_changed();
+		virtual void on_call_state_disconnected();
+		virtual void on_call_media_state_on_confirmed(pj::AudioMedia&);
 
 	private:
 
@@ -78,7 +55,5 @@ namespace eg::net
 		std::thread timeout_thread_;
 		std::mutex mutex_;
 		std::condition_variable cv_;
-
-		static void transfer_call_id_(size_t session_id, size_t call_id, pjsip_inv_state before, pjsip_inv_state after);
 	};
 }

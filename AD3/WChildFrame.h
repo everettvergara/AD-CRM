@@ -50,7 +50,6 @@ namespace eg::ad3
 		wxTextCtrl* register_text_input_multi(const std::string& code, const wxString& label, int lines = 5, const wxString& def = "", const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
 		wxCheckBox* register_checkbox(const std::string& code, const wxString& label, bool def = false, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
 		wxButton* register_button(const wxString& label, int id = wxID_ANY);
-
 	private:
 		std::unordered_map<std::string, wxWindow*> controls_;
 	};
