@@ -147,6 +147,7 @@
     <ClCompile Include="ServicePJAccount.cpp" />
     <ClCompile Include="ServicePJEndpoint.cpp" />
     <ClCompile Include="WChildFrame.cpp" />
+    <ClCompile Include="WManualDial.cpp" />
     <ClCompile Include="WMDIParentFrame.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -160,7 +161,7 @@
     <ClInclude Include="WApp.h" />
     <ClInclude Include="WAppAD3.hpp" />
     <ClInclude Include="WChildFrame.h" />
-    <ClInclude Include="WManualDial.hpp" />
+    <ClInclude Include="WManualDial.h" />
     <ClInclude Include="WMDIParentFrame.h" />
     <ClInclude Include="WMDIParentFrameAD3.hpp" />
     <ClInclude Include="WConfigSettings.hpp" />

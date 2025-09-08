@@ -3,7 +3,7 @@
 #include "WMDIParentFrame.h"
 
 #include "WConfigSettings.hpp"
-#include "WManualDial.hpp"
+#include "WManualDial.h"
 
 namespace eg::ad3
 {
