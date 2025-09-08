@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <functional>
+#include <mutex>
 #include "WChildFrame.h"
 #include "ConfigSettings.hpp"
 #include "PJCall.h"
@@ -23,6 +24,11 @@ namespace eg::ad3
 			path(std::move(p)), is_file(isf), visited(v)
 		{
 		}
+	};
+
+	enum class RecordState
+	{
+		New, Calling, JustEnded, Saved
 	};
 
 	class WManualDial :
@@ -56,19 +62,71 @@ namespace eg::ad3
 			on_init_input_controls_();
 			on_init_tree_();
 			on_init_buttons_();
+			set_button_states_(RecordState::New);
 
 			Show(true);
 		}
 
-		~WManualDial()
+	private:
+
+		std::mutex call_mutex_;
+
+		void set_button_states_(RecordState state)
 		{
-			if (tree_)
+			switch (state)
 			{
-				tree_->DeleteAllItems();
+			case RecordState::New:
+
+				mobile_->Enable();
+				name_->Enable();
+				remarks_->Enable();
+
+				new_button_->Disable();
+				call_button_->Enable();
+				stop_button_->Disable();
+				save_button_->Disable();
+				cancel_button_->Enable();
+				break;
+
+			case RecordState::Calling:
+
+				mobile_->Disable();
+				name_->Disable();
+				remarks_->Disable();
+
+				new_button_->Disable();
+				call_button_->Disable();
+				stop_button_->Enable();
+				save_button_->Disable();
+				cancel_button_->Disable();
+				break;
+
+			case RecordState::JustEnded:
+
+				mobile_->Disable();
+				name_->Enable();
+				remarks_->Enable();
+
+				new_button_->Enable();
+				call_button_->Disable();
+				stop_button_->Disable();
+				save_button_->Enable();
+				cancel_button_->Enable();
+				break;
+
+			case RecordState::Saved:
+				mobile_->Disable();
+				name_->Disable();
+				remarks_->Disable();
+
+				new_button_->Enable();
+				call_button_->Disable();
+				stop_button_->Disable();
+				save_button_->Disable();
+				cancel_button_->Enable();
+				break;
 			}
 		}
-
-	private:
 
 		void on_init_tree_()
 		{
@@ -108,6 +166,8 @@ namespace eg::ad3
 						name_->SetValue(data.at("name").get_ref<const std::string&>());
 						time_of_call_->SetValue(data.at("time_of_call").get_ref<const std::string&>());
 						remarks_->SetValue(data.at("remarks").get_ref<const std::string&>());
+
+						set_button_states_(RecordState::Saved);
 					}
 				});
 
@@ -129,6 +189,8 @@ namespace eg::ad3
 			save_button_->Bind(wxEVT_BUTTON, &WManualDial::on_save_, this);
 			cancel_button_ = register_button("Cancel", wxID_ANY);
 			cancel_button_->Bind(wxEVT_BUTTON, &WManualDial::on_cancel_, this);
+
+			set_button_states_(RecordState::New);
 		}
 
 		void on_init_input_controls_()
@@ -198,11 +260,14 @@ namespace eg::ad3
 							break;
 
 						case PJSIP_INV_STATE_DISCONNECTED:
+						{
+							std::lock_guard lock(call_mutex_);
+
 							if (current_call_ not_eq nullptr)
 							{
 								current_call_.reset();
 								new_button_->Enable();
-								call_button_->Enable();
+								call_button_->Disable();
 								stop_button_->Disable();
 								save_button_->Enable();
 								cancel_button_->Enable();
@@ -213,6 +278,7 @@ namespace eg::ad3
 							}
 
 							break;
+						}
 
 						default:
 							break;
@@ -232,40 +298,43 @@ namespace eg::ad3
 				return;
 			}
 
-			new_button_->Disable();
-			mobile_->Disable();
-			call_button_->Disable();
-			stop_button_->Enable();
-			save_button_->Disable();
-			cancel_button_->Disable();
+			std::lock_guard lock(call_mutex_);
+			{
+				if (current_call_ == nullptr)
+				{
+					current_call_ = std::make_shared<PJCallManualDial>(ServicePJAccount::instance().account, std::bind(&WManualDial::on_call_state_changed_, this, std::placeholders::_1));
+					current_call_->makeCall(std::format("sip:{}@{}", validated_mobile, ConfigSettings::instance().server_ip), []
+						{
+							pj::CallOpParam p(true);
+							p.opt.audioCount = 1;
+							p.opt.videoCount = 0;
+							return p;
+						}());
+				}
+			}
+
 			time_of_call_->SetValue(eg::string::datetime_to_formatted_string());
 
-			if (current_call_ == nullptr)
-			{
-				current_call_ = std::make_shared<PJCallManualDial>(ServicePJAccount::instance().account, std::bind(&WManualDial::on_call_state_changed_, this, std::placeholders::_1));
-				current_call_->makeCall(std::format("sip:{}@{}", validated_mobile, ConfigSettings::instance().server_ip), []
-					{
-						pj::CallOpParam p(true);
-						p.opt.audioCount = 1;
-						p.opt.videoCount = 0;
-						return p;
-					}());
-			}
+			set_button_states_(RecordState::Calling);
 		}
 
 		void on_new_(wxCommandEvent&)
 		{
 			get<wxTextCtrl>("mobile")->SetValue("");
 			get<wxTextCtrl>("name")->SetValue("");
-			status_->SetValue("PJSIP_INV_STATE_NULL");
 			get<wxTextCtrl>("remarks")->SetValue("");
+			status_->SetValue("PJSIP_INV_STATE_NULL");
+			time_of_call_->SetValue("");
+			time_call_ended_->SetValue("");
 
-			mobile_->Enable();
+			set_button_states_(RecordState::New);
 		}
 
 		void on_stop_(wxCommandEvent&)
 		{
-			stop_button_->Disable();
+			std::lock_guard lock(call_mutex_);
+			current_call_->hangup_call();
+			set_button_states_(RecordState::JustEnded);
 		}
 
 		std::string validated_mobile_()
@@ -376,6 +445,8 @@ namespace eg::ad3
 
 			add_item_expand(std::to_string(tm.tm_year + 1900), std::format("{:02}", tm.tm_mon + 1), std::format("{:02}", tm.tm_mday), file.filename().string());
 
+			set_button_states_(RecordState::Saved);
+
 			wxMessageBox("Call record saved", "Info", wxOK | wxICON_INFORMATION, this);
 		}
 
@@ -426,7 +497,6 @@ namespace eg::ad3
 			{
 				auto file_id = tree_->AppendItem(fdd, file, -1, -1, new DirMeta(std::format("{}/{}/{}/{}/{}", k_manual_folder, yyyy, mm, dd, file), true));
 				tree_->SelectItem(file_id);
-				//wxMessageBox("Just added", "Info", wxOK | wxICON_INFORMATION, this);
 			}
 
 			tree_->Expand(root_id);
