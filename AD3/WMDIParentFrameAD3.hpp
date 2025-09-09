@@ -4,6 +4,7 @@
 
 #include "WConfigSettings.hpp"
 #include "WManualDial.h"
+#include "WAutoDial.h"
 
 namespace eg::ad3
 {
@@ -21,8 +22,8 @@ namespace eg::ad3
 
 			auto* call_menu = new wxMenu();
 			register_sub_menu(call_menu, next_menu_id(), "Manual dial", &WMDIParentFrameAD3::on_call_manual_dial, this);
-			register_sub_menu(call_menu, next_menu_id(), "Auto dial", &WMDIParentFrameAD3::on_file_close, this);
-			register_sub_menu(call_menu, next_menu_id(), "Receive progressive calls", &WMDIParentFrameAD3::on_file_close, this);
+			register_sub_menu(call_menu, next_menu_id(), "Auto dial", &WMDIParentFrameAD3::on_call_auto_dial, this);
+			//register_sub_menu(call_menu, next_menu_id(), "Receive progressive calls", &WMDIParentFrameAD3::on_file_close, this);
 
 			menu->Append(file_menu, "&File");
 			menu->Append(call_menu, "&Call");
@@ -47,6 +48,17 @@ namespace eg::ad3
 				return;
 			}
 		}
+
+		void on_call_auto_dial(wxCommandEvent&)
+		{
+			static constexpr auto id = "auto_dial";
+			if (not is_child_active(id))
+			{
+				child_ids[id] = new WAutoDial(this);
+				return;
+			}
+		}
+
 		void on_file_close(wxCommandEvent&)
 		{
 			Close(true);

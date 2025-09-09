@@ -50,6 +50,21 @@ namespace eg::ad3
 		return input_control;
 	}
 
+	wxChoice* WChildFrame::register_dropdown(const std::string& code, const wxString& label, const wxPoint& pos, const wxSize& size, long style)
+	{
+		assert(not controls_.contains(code));
+
+		auto* label_control = new wxStaticText(panel, wxID_ANY, label);
+		auto* dropdown_control = new wxChoice(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+
+		sizer_fields->Add(label_control, 0, wxALIGN_CENTER_VERTICAL);
+		sizer_fields->Add(dropdown_control, 1, wxEXPAND);
+
+		controls_[code] = dropdown_control;
+
+		return dropdown_control;
+	}
+
 	wxTextCtrl* WChildFrame::register_text_input_multi(const std::string& code, const wxString& label, int lines, const wxString& def, const wxPoint& pos, const wxSize& size, long style)
 	{
 		assert(not controls_.contains(code));
@@ -122,6 +137,16 @@ namespace eg::ad3
 	{
 		auto* button = new wxButton(panel, wxID_ANY, label);
 		sizer_buttons->Add(button, 0, wxALL, k_border);
+		return button;
+	}
+
+	wxButton* WChildFrame::register_button_field(const wxString& label, int id)
+	{
+		auto* label_control = new wxStaticText(panel, wxID_ANY, "");
+		sizer_fields->Add(label_control, 0, wxALIGN_CENTER_VERTICAL);
+
+		auto* button = new wxButton(panel, wxID_ANY, label);
+		sizer_fields->Add(button, 0, wxALL, k_border);
 		return button;
 	}
 }

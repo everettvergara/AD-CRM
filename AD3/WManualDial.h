@@ -47,6 +47,8 @@ namespace eg::ad3
 		wxTextCtrl* remarks_;
 		wxButton* new_button_;
 		wxButton* call_button_;
+		wxButton* call_again_button_;
+
 		wxButton* stop_button_;
 		wxButton* save_button_;
 		wxButton* cancel_button_;
@@ -58,6 +60,7 @@ namespace eg::ad3
 		void on_init_buttons_();
 		void on_init_input_controls_();
 		void on_call_(wxCommandEvent&);
+		void on_call_again_(wxCommandEvent&);
 		void on_new_(wxCommandEvent&);
 		void on_stop_(wxCommandEvent&);
 		void on_save_(wxCommandEvent&);

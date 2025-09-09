@@ -27,6 +27,7 @@ namespace eg::ad3
 		status_(nullptr),
 		new_button_(nullptr),
 		call_button_(nullptr),
+		call_again_button_(nullptr),
 		stop_button_(nullptr),
 		save_button_(nullptr),
 		cancel_button_(nullptr)
@@ -52,6 +53,7 @@ namespace eg::ad3
 
 			new_button_->Disable();
 			call_button_->Enable();
+			call_again_button_->Disable();
 			stop_button_->Disable();
 			save_button_->Disable();
 			cancel_button_->Enable();
@@ -65,6 +67,7 @@ namespace eg::ad3
 
 			new_button_->Disable();
 			call_button_->Disable();
+			call_again_button_->Disable();
 			stop_button_->Enable();
 			save_button_->Disable();
 			cancel_button_->Disable();
@@ -78,6 +81,7 @@ namespace eg::ad3
 
 			new_button_->Enable();
 			call_button_->Disable();
+			call_again_button_->Enable();
 			stop_button_->Disable();
 			save_button_->Enable();
 			cancel_button_->Enable();
@@ -90,6 +94,7 @@ namespace eg::ad3
 
 			new_button_->Enable();
 			call_button_->Disable();
+			call_again_button_->Enable();
 			stop_button_->Disable();
 			save_button_->Disable();
 			cancel_button_->Enable();
@@ -151,6 +156,8 @@ namespace eg::ad3
 		new_button_->Bind(wxEVT_BUTTON, &WManualDial::on_new_, this);
 		call_button_ = register_button("Call", wxID_ANY);
 		call_button_->Bind(wxEVT_BUTTON, &WManualDial::on_call_, this);
+		call_again_button_ = register_button("Call Again", wxID_ANY);
+		call_again_button_->Bind(wxEVT_BUTTON, &WManualDial::on_call_again_, this);
 		stop_button_ = register_button("Stop", wxID_ANY);
 		stop_button_->Bind(wxEVT_BUTTON, &WManualDial::on_stop_, this);
 		stop_button_->Disable();
@@ -187,58 +194,55 @@ namespace eg::ad3
 
 	void WManualDial::on_call_state_changed_(pjsip_inv_state state)
 	{
-		wxTheApp->CallAfter([this, state]()
+		wxTheApp->CallAfter([this, state]() {
+			switch (state)
 			{
-				wxTheApp->CallAfter([this, state]() {
-					switch (state)
-					{
-					case PJSIP_INV_STATE_CALLING:
-						status_->SetValue("PJSIP_INV_STATE_CALLING");
-						break;
+			case PJSIP_INV_STATE_CALLING:
+				status_->SetValue("PJSIP_INV_STATE_CALLING");
+				break;
 
-					case PJSIP_INV_STATE_INCOMING:
-						status_->SetValue("PJSIP_INV_STATE_INCOMING");
-						break;
+			case PJSIP_INV_STATE_INCOMING:
+				status_->SetValue("PJSIP_INV_STATE_INCOMING");
+				break;
 
-					case PJSIP_INV_STATE_EARLY:
-						status_->SetValue("PJSIP_INV_STATE_EARLY");
-						break;
+			case PJSIP_INV_STATE_EARLY:
+				status_->SetValue("PJSIP_INV_STATE_EARLY");
+				break;
 
-					case PJSIP_INV_STATE_CONNECTING:
-						status_->SetValue("PJSIP_INV_STATE_CONNECTING");
-						break;
+			case PJSIP_INV_STATE_CONNECTING:
+				status_->SetValue("PJSIP_INV_STATE_CONNECTING");
+				break;
 
-					case PJSIP_INV_STATE_CONFIRMED:
-						status_->SetValue("PJSIP_INV_STATE_CONFIRMED");
-						break;
+			case PJSIP_INV_STATE_CONFIRMED:
+				status_->SetValue("PJSIP_INV_STATE_CONFIRMED");
+				break;
 
-					case PJSIP_INV_STATE_DISCONNECTED:
-					{
-						std::lock_guard lock(call_mutex_);
+			case PJSIP_INV_STATE_DISCONNECTED:
+			{
+				std::lock_guard lock(call_mutex_);
 
-						if (current_call_ not_eq nullptr)
-						{
-							current_call_.reset();
-							new_button_->Enable();
-							call_button_->Disable();
-							stop_button_->Disable();
-							save_button_->Enable();
-							cancel_button_->Enable();
+				if (current_call_ not_eq nullptr)
+				{
+					current_call_.reset();
+					new_button_->Enable();
+					call_button_->Disable();
+					stop_button_->Disable();
+					save_button_->Enable();
+					cancel_button_->Enable();
 
-							time_call_ended_->SetValue(eg::string::datetime_to_formatted_string());
+					time_call_ended_->SetValue(eg::string::datetime_to_formatted_string());
 
-							wxMessageBox("Call ended", "Info", wxOK | wxICON_INFORMATION);
-						}
+					wxMessageBox("Call ended", "Info", wxOK | wxICON_INFORMATION);
+				}
 
-						break;
-					}
+				break;
+			}
 
-					default:
-						break;
-					}
-					status_->Refresh();
-					status_->Update();
-					});
+			default:
+				break;
+			}
+			status_->Refresh();
+			status_->Update();
 			});
 	}
 
@@ -269,6 +273,13 @@ namespace eg::ad3
 		time_of_call_->SetValue(eg::string::datetime_to_formatted_string());
 
 		set_components_state_(RecordState::Calling);
+	}
+
+	void WManualDial::on_call_again_(wxCommandEvent& e)
+	{
+		time_of_call_->SetValue("");
+
+		on_call_(e);
 	}
 
 	void WManualDial::on_new_(wxCommandEvent&)

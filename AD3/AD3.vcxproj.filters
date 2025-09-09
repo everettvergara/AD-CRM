@@ -45,6 +45,9 @@
     <ClCompile Include="WManualDial.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WAutoDial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WApp.h">
@@ -87,6 +90,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PJCallManualDial.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WAutoDial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
