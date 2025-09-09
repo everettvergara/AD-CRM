@@ -476,7 +476,13 @@ namespace eg::ad3
 
 		const auto t = std::time(nullptr);
 		const auto tm = *std::localtime(&t);
-		const auto filename = std::format("{}/{:04}/{:02}/{:02}/{}/{}_{}_{}.json", k_auto_folder, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, last_cm_data_.ucode, last_cm_data_.mobile, name, t);
+		const auto filename = std::format("{}/{:04}/{:02}/{:02}/{}/{}_{}_{}.json",
+			k_auto_folder,
+			tm.tm_year + 1900,
+			tm.tm_mon + 1,
+			tm.tm_mday,
+			last_cm_data_.ucode,
+			last_cm_data_.mobile, name, t);
 
 		if (const auto path = std::filesystem::path(filename).parent_path();
 			not std::filesystem::exists(path))
@@ -488,7 +494,11 @@ namespace eg::ad3
 		file << j.dump(4);
 		file.close();
 
-		add_item_expand_(std::to_string(tm.tm_year + 1900), std::format("{:02}", tm.tm_mon + 1), std::format("{:02}", tm.tm_mday), last_cm_data_.ucode,
+		add_item_expand_(
+			std::to_string(tm.tm_year + 1900),
+			std::format("{:02}", tm.tm_mon + 1),
+			std::format("{:02}", tm.tm_mday),
+			last_cm_data_.ucode,
 			std::filesystem::path(filename).filename().string());
 	}
 
@@ -532,7 +542,7 @@ namespace eg::ad3
 		auto fucode = item_exists(fdd, ucode);
 		if (fucode == fdd)
 		{
-			fucode = tree_->AppendItem(fdd, dd, -1, -1, new DirMeta(std::format("{}/{}/{}/{}/{}", k_auto_folder, yyyy, mm, dd, ucode)));
+			fucode = tree_->AppendItem(fdd, ucode, -1, -1, new DirMeta(std::format("{}/{}/{}/{}/{}", k_auto_folder, yyyy, mm, dd, ucode)));
 		}
 
 		if (auto item_data = dynamic_cast<DirMeta*>(tree_->GetItemData(fdd)); not item_data->visited)
