@@ -3,9 +3,6 @@
 #include <stdexcept>
 #include "ServicePJEndpoint.h"
 #include "PJHelper.h"
-//#include "ConfigSIP.hpp"
-//#include "ServiceCtrlC.h"
-//#include "ServiceCallManager.h"
 
 namespace eg::ad3
 {

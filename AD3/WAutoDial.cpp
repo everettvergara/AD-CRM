@@ -1,3 +1,4 @@
+/*
 #include "WAutoDial.h"
 #include <fstream>
 #include <format>
@@ -15,7 +16,7 @@
 namespace eg::ad3
 {
 	constexpr auto k_db_driver = "{SQL Server}";
-	constexpr auto k_db_server = "WIN-0BL4BGRJARA"; // 192.168.254.120;
+	constexpr auto k_db_server = "WIN-0BL4BGRJARA";
 	constexpr auto k_db_database = "wmc";
 	constexpr auto k_db_user = "sa";
 	constexpr auto k_db_password = "Kerberos2014!";
@@ -65,12 +66,24 @@ namespace eg::ad3
 		{
 		case RecordState::Stopped:
 			tree_->Enable();
+			cm_client_->Enable();
+			cm_client_campaign_->Enable();
+			cm_prio_->Enable();
+			cm_status_->Enable();
+
+			auto_dial_->Enable();
 			stop_button_->Disable();
 			cancel_button_->Enable();
 			break;
 
 		case RecordState::Calling:
 			tree_->Disable();
+			cm_client_->Disable();
+			cm_client_campaign_->Disable();
+			cm_prio_->Disable();
+			cm_status_->Disable();
+
+			auto_dial_->Disable();
 			stop_button_->Enable();
 			cancel_button_->Disable();
 			break;
@@ -199,6 +212,7 @@ namespace eg::ad3
 
 		// Populate the Client;
 		cm_client_ = register_dropdown("client", "Client:");
+
 		cm_client_campaign_ = register_dropdown("campaign", "Campaign:");
 		cm_prio_ = register_dropdown("prio", "Prio:");
 		cm_status_ = register_dropdown("status", "Status:");
@@ -342,6 +356,7 @@ namespace eg::ad3
 		saved_->Disable();
 		saved_->SetValue(false);
 		remarks_ = register_text_input_multi("remarks", "Remarks:", 10, "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		remarks_->Disable();
 	}
 
 	void WAutoDial::register_node_elements_(const wxTreeItemId& node_id, const std::string& path)
@@ -391,17 +406,11 @@ namespace eg::ad3
 
 					if (current_call_ not_eq nullptr)
 					{
-						LOG_II("bEFORE RESET");
-
 						current_call_.reset();
-						stop_button_->Disable();
-						cancel_button_->Enable();
-
 						last_cm_data_.time_call_ended = eg::string::datetime_to_formatted_string();
 						time_call_ended_->SetValue(eg::string::datetime_to_formatted_string());
 					}
 				}
-				LOG_II("Call ended");
 				call_cv_.notify_all();
 
 				break;
@@ -419,14 +428,14 @@ namespace eg::ad3
 			std::lock_guard lock(call_mutex_);
 			if (current_call_ == nullptr)
 			{
-				current_call_ = std::make_shared<PJCallManualDial>(ServicePJAccount::instance().account, std::bind(&WAutoDial::on_call_state_changed_, this, std::placeholders::_1));
-				current_call_->makeCall(std::format("sip:{}@{}", last_cm_data_.mobile, ConfigSettings::instance().server_ip), []
-					{
-						pj::CallOpParam p(true);
-						p.opt.audioCount = 1;
-						p.opt.videoCount = 0;
-						return p;
-					}());
+				//current_call_ = std::make_shared<PJCallManualDial>(ServicePJAccount::instance().account, std::bind(&WAutoDial::on_call_state_changed_, this, std::placeholders::_1));
+				//current_call_->makeCall(std::format("sip:{}@{}", last_cm_data_.mobile, ConfigSettings::instance().server_ip), []
+				//	{
+				//		pj::CallOpParam p(true);
+				//		p.opt.audioCount = 1;
+				//		p.opt.videoCount = 0;
+				//		return p;
+				//	}());
 			}
 		}
 
@@ -625,6 +634,17 @@ namespace eg::ad3
 		// Get next_id from db
 		auto next_id = selected_status_->next_id;
 		auto max_id = selected_status_->max_id;
+
+		if (next_id > max_id)
+		{
+			wxTheApp->CallAfter([this]()
+				{
+					wxMessageBox("No more records to call for this option.", "Info", wxOK | wxICON_INFORMATION, this);
+					set_components_state_(RecordState::Stopped);
+				});
+			return false;
+		}
+
 		auto retrieve_sql = std::format("select a.cm_id, a.contact_name, a.mobile, a.remarks from vw_ad_lr_priority_new as a where next_id = {}", next_id);
 
 		auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};", k_db_driver, k_db_server, k_db_database, k_db_user, k_db_password);
@@ -719,3 +739,5 @@ namespace eg::ad3
 		return sanitized;
 	}
 }
+
+*/

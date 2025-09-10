@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 #include <memory>
 #include <string>
 #include <functional>
@@ -137,3 +137,5 @@ namespace eg::ad3
 		[[nodiscard]] std::string get_validated_name_();
 	};
 }
+
+*/

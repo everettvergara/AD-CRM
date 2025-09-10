@@ -42,10 +42,13 @@
     <ClCompile Include="PJHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WManualDial.cpp">
+    <ClCompile Include="WDialer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WAutoDial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Libs\Common\MiniAudioImplem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,7 +83,7 @@
     <ClInclude Include="ServicePJAccount.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WManualDial.h">
+    <ClInclude Include="WDialer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PJCall.h">
@@ -93,6 +96,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WAutoDial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WDialerCommon.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
