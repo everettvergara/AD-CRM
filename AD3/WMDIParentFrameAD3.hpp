@@ -20,7 +20,7 @@ namespace eg::ad3
 			register_sub_menu(file_menu, next_menu_id(), "Close", &WMDIParentFrameAD3::on_file_close, this);
 
 			auto* call_menu = new wxMenu();
-			register_sub_menu(call_menu, next_menu_id(), "Manual dial", &WMDIParentFrameAD3::on_call_dialer, this);
+			register_sub_menu(call_menu, next_menu_id(), "Dialer", &WMDIParentFrameAD3::on_call_dialer, this);
 			//register_sub_menu(call_menu, next_menu_id(), "Auto dial", &WMDIParentFrameAD3::on_call_auto_dial, this);
 
 			menu->Append(file_menu, "&File");
@@ -45,25 +45,9 @@ namespace eg::ad3
 				auto child = new WDialer(this);
 				child_ids[id] = child;
 
-				//child->init();
-				//child->Show(true);
 				return;
 			}
 		}
-
-		//void on_call_auto_dial(wxCommandEvent&)
-		//{
-		//	static constexpr auto id = "auto_dial";
-		//	if (not is_child_active(id))
-		//	{
-		//		//auto child = new WDialer(this);
-		//		//child_ids[id] = child;
-
-		//		//child->init();
-		//		//child->Show(true);
-		//		return;
-		//	}
-		//}
 
 		void on_file_close(wxCommandEvent&)
 		{

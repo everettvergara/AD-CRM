@@ -190,6 +190,8 @@ namespace eg::ad3
 				filter_prio_->Disable();
 				filter_status_->Disable();
 				remarks_->Enable();
+				new_button_->Enable();
+				call_again_button_->Enable();
 			}
 			else
 			{
@@ -199,6 +201,8 @@ namespace eg::ad3
 				filter_prio_->Enable();
 				filter_status_->Enable();
 				remarks_->Disable();
+				new_button_->Disable();
+				call_again_button_->Disable();
 			}
 
 			id_->Disable();
@@ -209,9 +213,7 @@ namespace eg::ad3
 			tree_->Enable();
 
 			playback_button_->Enable(data_.has_confirmed_status());
-			new_button_->Enable();
 			call_button_->Disable();
-			call_again_button_->Enable();
 			stop_button_->Disable();
 			save_button_->Enable();
 			cancel_button_->Enable();
@@ -267,18 +269,20 @@ namespace eg::ad3
 			tree_->Enable();
 
 			playback_button_->Enable(data_.has_confirmed_status());
-			new_button_->Enable();
 
 			if (not filter_.is_auto)
 			{
+				new_button_->Enable();
 				call_button_->Disable();
+				call_again_button_->Enable();
 			}
 			else
 			{
+				new_button_->Disable();
 				call_button_->Enable();
+				call_again_button_->Disable();
 			}
 
-			call_again_button_->Enable();
 			stop_button_->Disable();
 			save_button_->Disable();
 			cancel_button_->Enable();
@@ -341,7 +345,7 @@ namespace eg::ad3
 		new_button_->Bind(wxEVT_BUTTON, &WDialer::on_new_, this);
 		call_button_ = register_button("Call", wxID_ANY);
 		call_button_->Bind(wxEVT_BUTTON, &WDialer::on_call_, this);
-		call_again_button_ = register_button("Call Again", wxID_ANY);
+		call_again_button_ = register_button("Call this person again", wxID_ANY);
 		call_again_button_->Bind(wxEVT_BUTTON, &WDialer::on_call_again_, this);
 		stop_button_ = register_button("Stop", wxID_ANY);
 		stop_button_->Bind(wxEVT_BUTTON, &WDialer::on_stop_, this);
@@ -363,6 +367,20 @@ namespace eg::ad3
 				if (filter_.is_auto)
 				{
 					populate_master_();
+				}
+				else
+				{
+					filter_.selected_client = nullptr;
+					filter_.selected_campaign = nullptr;
+					filter_.selected_prio = nullptr;
+					filter_.selected_status = nullptr;
+					filter_client_->SetSelection(wxNOT_FOUND);
+					filter_campaign_->Clear();
+					filter_prio_->Clear();
+					filter_status_->Clear();
+					filter_to_call_count_->SetValue("0");
+					data_.ucode = "";
+					ucode_->SetValue("");
 				}
 
 				update_components_state_();
@@ -667,8 +685,8 @@ namespace eg::ad3
 			return;
 		}
 
-		data_.ucode = "NA";
-		ucode_->SetValue(data_.ucode);
+		//data_.ucode = "NA";
+		//ucode_->SetValue(data_.ucode);
 
 		call_proper_(validated_name);
 	}
@@ -804,7 +822,7 @@ namespace eg::ad3
 			}
 		}
 
-		const auto filename = std::format("{}/{}_{}_{}.json", meta_folder, data_.mobile, DialerData::trimmed_name(data_.name), std::time(nullptr));
+		const auto filename = std::format("{}/{}_{}_{}.json", meta_folder, DialerData::trimmed_name(data_.name), data_.mobile, std::time(nullptr));
 
 		data_.save(filename);
 
@@ -817,7 +835,7 @@ namespace eg::ad3
 	{
 		const auto t = std::time(nullptr);
 		const auto tm = *std::localtime(&t);
-		return std::format("{}/{}_{}_{}.wav", k_record_folder, validated_mobile, validated_name, t);
+		return std::format("{}/{}_{}_{}.wav", k_record_folder, validated_name, validated_mobile, t);
 	}
 
 	std::tuple<std::string, std::string, std::string, std::string> WDialer::generate_meta_folder()
