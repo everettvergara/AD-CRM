@@ -51,6 +51,11 @@ namespace eg::ad3
 	{
 		size_t status_id, min_id, max_id, next_id;
 		std::string ucode;
+
+		size_t to_call_count() const
+		{
+			return max_id - next_id + 1;
+		}
 	};
 
 	struct PrioDD
@@ -85,6 +90,11 @@ namespace eg::ad3
 		std::unordered_map<size_t, std::string> status_master;
 
 		std::vector<ClientDD> clients;
+
+		ClientDD* selected_client;
+		CampaignDD* selected_campaign;
+		PrioDD* selected_prio;
+		StatusSeriesDD* selected_status;
 	};
 
 	struct DialerData

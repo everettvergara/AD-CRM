@@ -61,10 +61,14 @@ namespace eg::ad3
 		DialerFilter filter_;
 		DialerData data_;
 
-		//virtual void on_init_input_controls_pre_() {};
+		void on_init_filter_controls_();
 		void on_init_input_controls_();
 		void on_init_tree_();
 		void on_init_buttons_();
+
+		void call_proper_(const std::string& validated_name);
+		void on_call_manual_();
+		void on_call_auto_();
 
 		void on_call_(wxCommandEvent&);
 		void on_call_again_(wxCommandEvent&);

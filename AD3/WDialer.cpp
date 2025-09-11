@@ -3,8 +3,10 @@
 #include <format>
 #include <tuple>
 #include <chrono>
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include <miniaudio.h>
+
 #include <nanodbc/nanodbc.h>
 #include "Common/StringHelper.hpp"
 #include "ServicePJAccount.h"
@@ -38,6 +40,7 @@ namespace eg::ad3
 		data_()
 
 	{
+		on_init_filter_controls_();
 		on_init_input_controls_();
 		on_init_tree_();
 		on_init_buttons_();
@@ -46,18 +49,13 @@ namespace eg::ad3
 		Show(true);
 	}
 
-	//void WDialer::init()
-	//{
-	//	on_init_input_controls_();
-	//	on_init_tree_();
-	//	on_init_buttons_();
-	//	update_components_state_();
-
-	//	Show(true);
-	//}
-
 	void WDialer::update_components_from_data_()
 	{
+		if (not filter_.is_manual)
+		{
+			filter_to_call_count_->SetValue(std::to_string(filter_.selected_status->to_call_count()));
+		}
+
 		id_->SetValue(data_.id);
 		ucode_->SetValue(data_.ucode);
 		mobile_->SetValue(data_.mobile);
@@ -324,7 +322,7 @@ namespace eg::ad3
 		cancel_button_->Bind(wxEVT_BUTTON, &WDialer::on_close_, this);
 	}
 
-	void WDialer::on_init_input_controls_()
+	void WDialer::on_init_filter_controls_()
 	{
 		// Filters
 		filter_is_manual_ = register_checkbox("is_manual", "Manual dialer?:", true);
@@ -339,12 +337,110 @@ namespace eg::ad3
 
 				update_components_state_();
 			});
-		filter_client_ = register_dropdown("filter_client", "Select Client:");
-		filter_campaign_ = register_dropdown("filter_client_campaign", "Select Campaign:");
-		filter_prio_ = register_dropdown("filter_prio", "Select Prio:");
-		filter_status_ = register_dropdown("filter_status", "Select Status:");
-		filter_to_call_count_ = register_text_input("to_call_count", "To Call Count:", "0", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 
+		filter_client_ = register_dropdown("filter_client", "Select Client:");
+		filter_client_->Bind(wxEVT_CHOICE, [this](wxCommandEvent& e)
+			{
+				void* ptr = e.GetClientData();
+				auto client_id = reinterpret_cast<size_t>(ptr);
+
+				auto fclient = std::find_if(filter_.clients.begin(), filter_.clients.end(), [client_id](const ClientDD& a) -> bool
+					{
+						return a.client_id == client_id;
+					});
+
+				filter_.selected_client = &(*fclient);
+
+				filter_campaign_->Clear();
+				filter_prio_->Clear();
+				filter_status_->Clear();
+
+				filter_.selected_campaign = nullptr;
+				filter_.selected_prio = nullptr;
+				filter_.selected_status = nullptr;
+
+				for (const auto& [campaign_id, _] : fclient->campaigns)
+				{
+					filter_campaign_->Append(filter_.campaign_master.at(campaign_id), reinterpret_cast<void*>(campaign_id));
+				}
+
+				data_.clear();
+			});
+
+		filter_campaign_ = register_dropdown("filter_client_campaign", "Select Campaign:");
+		filter_campaign_->Bind(wxEVT_CHOICE, [this](wxCommandEvent& e)
+			{
+				void* ptr = e.GetClientData();
+				auto campaign_id = reinterpret_cast<size_t>(ptr);
+
+				auto fcampaign = std::find_if(filter_.selected_client->campaigns.begin(), filter_.selected_client->campaigns.end(), [campaign_id](const CampaignDD& a) -> bool
+					{
+						return a.campaign_id == campaign_id;
+					});
+
+				filter_.selected_campaign = &(*fcampaign);
+
+				filter_prio_->Clear();
+				filter_status_->Clear();
+				filter_.selected_prio = nullptr;
+				filter_.selected_status = nullptr;
+
+				for (const auto& [prio_id, _] : fcampaign->prios)
+				{
+					filter_prio_->Append(filter_.prio_master.at(prio_id), reinterpret_cast<void*>(prio_id));
+				}
+
+				data_.clear();
+			});
+
+		filter_prio_ = register_dropdown("filter_prio", "Select Prio:");
+		filter_prio_->Bind(wxEVT_CHOICE, [this](wxCommandEvent& e)
+			{
+				void* ptr = e.GetClientData();
+				auto prio_id = reinterpret_cast<size_t>(ptr);
+				auto fprio = std::find_if(filter_.selected_campaign->prios.begin(), filter_.selected_campaign->prios.end(), [prio_id](const PrioDD& a) -> bool
+					{
+						return a.prio_id == prio_id;
+					});
+
+				filter_.selected_prio = &(*fprio);
+
+				filter_status_->Clear();
+				filter_.selected_status = nullptr;
+
+				for (const auto& [status_id, _, __, ___, ____] : fprio->status_series)
+				{
+					filter_status_->Append(filter_.status_master.at(status_id), reinterpret_cast<void*>(status_id));
+				}
+
+				data_.clear();
+			});
+
+		filter_status_ = register_dropdown("filter_status", "Select Status:");
+		filter_status_->Bind(wxEVT_CHOICE, [this](wxCommandEvent& e)
+			{
+				void* ptr = e.GetClientData();
+				auto status_id = reinterpret_cast<size_t>(ptr);
+				auto fstatus = std::find_if(filter_.selected_prio->status_series.begin(), filter_.selected_prio->status_series.end(), [status_id](const StatusSeriesDD& a) -> bool
+					{
+						return a.status_id == status_id;
+					});
+
+				filter_.selected_status = &(*fstatus);
+
+				filter_to_call_count_->SetValue(std::to_string(filter_.selected_status->to_call_count()));
+
+				data_.clear();
+				data_.ucode = filter_.selected_status->ucode;
+
+				update_components_from_data_();
+			});
+
+		filter_to_call_count_ = register_text_input("to_call_count", "To Call Count:", "0", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	}
+
+	void WDialer::on_init_input_controls_()
+	{
 		// Fields
 		register_text("Call details", 300);
 		id_ = register_text_input("id", "CM ID:", data_.id);
@@ -401,8 +497,10 @@ namespace eg::ad3
 
 				case PJSIP_INV_STATE_DISCONNECTED:
 				{
+					auto should_stop_auto = (data_.state == DialerState::Stopping);
+
 					{
-						std::lock_guard lock(call_mutex_);
+						std::lock_guard lock(call_mutex_);;
 						current_call_.reset();
 						data_.time_call_ended = eg::string::datetime_to_formatted_string();
 						data_.state = DialerState::JustEnded;
@@ -412,10 +510,24 @@ namespace eg::ad3
 						{
 							file_recording_->SetValue(data_.file_recording);
 						}
+					}
+
+					if (filter_.is_manual)
+					{
+						update_components_state_();
+						wxMessageBox("Call ended", "Info", wxOK | wxICON_INFORMATION);
+					}
+					else
+					{
+						if (not should_stop_auto)
+						{
+							on_call_auto_();
+							wxMessageBox("Auto dialer stopped. Press Call to continue.", "Info", wxOK | wxICON_INFORMATION);
+						}
 
 						update_components_state_();
 					}
-					wxMessageBox("Call ended", "Info", wxOK | wxICON_INFORMATION);
+
 					break;
 				}
 
@@ -428,6 +540,76 @@ namespace eg::ad3
 	}
 
 	void WDialer::on_call_(wxCommandEvent&)
+	{
+		if (filter_.is_manual)
+		{
+			on_call_manual_();
+		}
+		else
+		{
+			on_call_auto_();
+		}
+	}
+
+	void WDialer::on_call_auto_()
+	{
+		if (filter_.selected_status->to_call_count() == 0)
+		{
+			wxMessageBox("No more records to call for this option.", "Info", wxOK | wxICON_INFORMATION, this);
+			return;
+		}
+
+		const auto retrieve_sql = std::format("select a.cm_id, a.contact_name, a.mobile, a.remarks from vw_ad_lr_priority_new as a where next_id = {}", filter_.selected_status->next_id);
+
+		auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};", k_db_driver, k_db_server, k_db_database, k_db_user, k_db_password);
+		nanodbc::connection conn(NANODBC_TEXT(db_conn));
+
+		if (not conn.connected())
+		{
+			wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
+			return;
+		}
+
+		nanodbc::result results = nanodbc::execute(
+			conn,
+			NANODBC_TEXT(retrieve_sql));
+
+		data_.clear();
+		if (results.next())
+		{
+			data_.id = results.get<std::string>(0);
+			data_.name = results.get<std::string>(1);
+			data_.mobile = results.get<std::string>(2);
+			data_.remarks = results.get<std::string>(3);
+
+			auto next_id = filter_.selected_status->next_id;
+			nanodbc::statement stmt(conn);
+			auto update_sql = std::format("UPDATE tb_ad_cache_priority_series SET next_id = {} WHERE {} between min_id and max_id", next_id + 1, next_id);
+			prepare(stmt, NANODBC_TEXT(update_sql));
+
+			if (auto result = execute(stmt);
+				result.affected_rows() == 0)
+			{
+				conn.disconnect();
+				wxMessageBox("Could not update the next_id", "Database Error", wxOK | wxICON_ERROR, this);
+				return;
+			}
+
+			filter_.selected_status->next_id = next_id + 1;
+			update_components_from_data_();
+		}
+		else
+		{
+			wxMessageBox("No record retrieved.", "Database Error", wxOK | wxICON_ERROR, this);
+			return;
+		}
+
+		const auto validated_name = DialerData::trimmed_name(data_.name);
+
+		call_proper_(validated_name);
+	}
+
+	void WDialer::on_call_manual_()
 	{
 		if (auto err = update_data_from_components_(); err not_eq nullptr)
 		{
@@ -442,6 +624,11 @@ namespace eg::ad3
 			return;
 		}
 
+		call_proper_(validated_name);
+	}
+
+	void WDialer::call_proper_(const std::string& validated_name)
+	{
 		{
 			data_.file_recording = generate_wav_filename(data_.mobile, validated_name);
 			std::lock_guard lock(call_mutex_);
@@ -487,7 +674,7 @@ namespace eg::ad3
 		file_recording_->SetValue("");
 		//update_components_state_();
 
-		on_call_(e);
+		on_call_manual_();
 	}
 
 	void WDialer::on_new_(wxCommandEvent&)
