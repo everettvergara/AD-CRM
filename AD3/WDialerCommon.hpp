@@ -132,7 +132,7 @@ namespace eg::ad3
 		void clear()
 		{
 			id.clear();
-			ucode.clear();
+			//ucode.clear();
 			mobile.clear();
 			name.clear();
 			time_of_call.clear();
