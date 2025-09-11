@@ -653,6 +653,9 @@ namespace eg::ad3
 			return;
 		}
 
+		data_.ucode = "NA";
+		ucode_->SetValue(data_.ucode);
+
 		call_proper_(validated_name);
 	}
 
