@@ -91,6 +91,7 @@ namespace eg::ad3
 
 				mobile_->Enable();
 				name_->Enable();
+				remarks_->Enable();
 			}
 			else
 			{
@@ -102,11 +103,11 @@ namespace eg::ad3
 
 				mobile_->Disable();
 				name_->Disable();
+				remarks_->Disable();
 			}
 
 			id_->Disable();
 			ucode_->Disable();
-			remarks_->Enable();
 			tree_->Enable();
 
 			playback_button_->Disable();
@@ -253,7 +254,16 @@ namespace eg::ad3
 
 			playback_button_->Enable(data_.has_confirmed_status());
 			new_button_->Enable();
-			call_button_->Disable();
+
+			if (filter_.is_manual)
+			{
+				call_button_->Disable();
+			}
+			else
+			{
+				call_button_->Enable();
+			}
+
 			call_again_button_->Enable();
 			stop_button_->Disable();
 			save_button_->Disable();
@@ -600,7 +610,7 @@ namespace eg::ad3
 			data_.name = results.get<std::string>(1);
 			data_.mobile = results.get<std::string>(2);
 			data_.remarks = results.get<std::string>(3);
-
+			data_.ucode = filter_.selected_status->ucode;
 			auto next_id = filter_.selected_status->next_id;
 			nanodbc::statement stmt(conn);
 			auto update_sql = std::format("UPDATE tb_ad_cache_priority_series SET next_id = {} WHERE {} between min_id and max_id", next_id + 1, next_id);
