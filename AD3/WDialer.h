@@ -30,7 +30,7 @@ namespace eg::ad3
 
 		wxTreeCtrl* tree_;
 
-		wxCheckBox* filter_is_manual_;
+		wxCheckBox* filter_is_auto_;
 		wxChoice* filter_client_;
 		wxChoice* filter_campaign_;
 		wxChoice* filter_prio_;

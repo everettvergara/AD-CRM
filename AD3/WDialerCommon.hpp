@@ -78,7 +78,7 @@ namespace eg::ad3
 
 	struct DialerFilter
 	{
-		bool is_manual = true;
+		bool is_auto = false;
 		size_t client_id;
 		size_t campaign_id;
 		size_t prio_id;

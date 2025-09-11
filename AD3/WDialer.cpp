@@ -51,7 +51,7 @@ namespace eg::ad3
 
 	void WDialer::update_components_from_data_()
 	{
-		if (not filter_.is_manual)
+		if (filter_.is_auto)
 		{
 			filter_to_call_count_->SetValue(std::to_string(filter_.selected_status->to_call_count()));
 		}
@@ -81,9 +81,9 @@ namespace eg::ad3
 		{
 		case DialerState::New:
 
-			if (filter_.is_manual)
+			if (not filter_.is_auto)
 			{
-				filter_is_manual_->Enable();
+				filter_is_auto_->Enable();
 				filter_client_->Disable();
 				filter_campaign_->Disable();
 				filter_prio_->Disable();
@@ -95,7 +95,7 @@ namespace eg::ad3
 			}
 			else
 			{
-				filter_is_manual_->Enable();
+				filter_is_auto_->Enable();
 				filter_client_->Enable();
 				filter_campaign_->Enable();
 				filter_prio_->Enable();
@@ -121,7 +121,7 @@ namespace eg::ad3
 
 		case DialerState::Calling:
 
-			filter_is_manual_->Disable();
+			filter_is_auto_->Disable();
 			filter_client_->Disable();
 			filter_campaign_->Disable();
 			filter_prio_->Disable();
@@ -131,7 +131,14 @@ namespace eg::ad3
 			ucode_->Disable();
 			mobile_->Disable();
 			name_->Disable();
-			remarks_->Enable();
+			if (not filter_.is_auto)
+			{
+				remarks_->Enable();
+			}
+			else
+			{
+				remarks_->Disable();
+			}
 			tree_->Disable();
 
 			playback_button_->Disable();
@@ -145,7 +152,7 @@ namespace eg::ad3
 
 		case DialerState::Stopping:
 
-			filter_is_manual_->Disable();
+			filter_is_auto_->Disable();
 			filter_client_->Disable();
 			filter_campaign_->Disable();
 			filter_prio_->Disable();
@@ -155,7 +162,14 @@ namespace eg::ad3
 			ucode_->Disable();
 			mobile_->Disable();
 			name_->Disable();
-			remarks_->Enable();
+			if (not filter_.is_auto)
+			{
+				remarks_->Enable();
+			}
+			else
+			{
+				remarks_->Disable();
+			}
 			tree_->Disable();
 
 			playback_button_->Disable();
@@ -168,9 +182,9 @@ namespace eg::ad3
 
 		case DialerState::JustEnded:
 
-			if (filter_.is_manual)
+			if (not filter_.is_auto)
 			{
-				filter_is_manual_->Enable();
+				filter_is_auto_->Enable();
 				filter_client_->Disable();
 				filter_campaign_->Disable();
 				filter_prio_->Disable();
@@ -179,7 +193,7 @@ namespace eg::ad3
 			}
 			else
 			{
-				filter_is_manual_->Enable();
+				filter_is_auto_->Enable();
 				filter_client_->Enable();
 				filter_campaign_->Enable();
 				filter_prio_->Enable();
@@ -205,7 +219,7 @@ namespace eg::ad3
 
 		case DialerState::PlayingWav:
 
-			filter_is_manual_->Disable();
+			filter_is_auto_->Disable();
 			filter_client_->Disable();
 			filter_campaign_->Disable();
 			filter_prio_->Disable();
@@ -228,9 +242,9 @@ namespace eg::ad3
 
 		case DialerState::Saved:
 
-			if (filter_.is_manual)
+			if (not filter_.is_auto)
 			{
-				filter_is_manual_->Enable();
+				filter_is_auto_->Enable();
 				filter_client_->Disable();
 				filter_campaign_->Disable();
 				filter_prio_->Disable();
@@ -238,7 +252,7 @@ namespace eg::ad3
 			}
 			else
 			{
-				filter_is_manual_->Enable();
+				filter_is_auto_->Enable();
 				filter_client_->Enable();
 				filter_campaign_->Enable();
 				filter_prio_->Enable();
@@ -255,7 +269,7 @@ namespace eg::ad3
 			playback_button_->Enable(data_.has_confirmed_status());
 			new_button_->Enable();
 
-			if (filter_.is_manual)
+			if (not filter_.is_auto)
 			{
 				call_button_->Disable();
 			}
@@ -341,12 +355,12 @@ namespace eg::ad3
 	void WDialer::on_init_filter_controls_()
 	{
 		// Filters
-		filter_is_manual_ = register_checkbox("is_manual", "Manual dialer?:", true);
-		filter_is_manual_->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e)
+		filter_is_auto_ = register_checkbox("is_auto", "Auto dialer?:", false);
+		filter_is_auto_->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e)
 			{
-				filter_.is_manual = e.IsChecked();
+				filter_.is_auto = e.IsChecked();
 
-				if (not filter_.is_manual)
+				if (filter_.is_auto)
 				{
 					populate_master_();
 				}
@@ -528,7 +542,7 @@ namespace eg::ad3
 						}
 					}
 
-					if (filter_.is_manual)
+					if (not filter_.is_auto)
 					{
 						update_components_state_();
 						wxMessageBox("Call ended", "Info", wxOK | wxICON_INFORMATION);
@@ -570,7 +584,7 @@ namespace eg::ad3
 
 	void WDialer::on_call_(wxCommandEvent&)
 	{
-		if (filter_.is_manual)
+		if (not filter_.is_auto)
 		{
 			on_call_manual_();
 		}
