@@ -525,10 +525,23 @@ namespace eg::ad3
 					}
 					else
 					{
+						save_();
+
+						// If user did not stop the auto dialer...
 						if (not should_stop_auto)
 						{
-							on_call_auto_();
-							wxMessageBox("Auto dialer stopped. Press Call to continue.", "Info", wxOK | wxICON_INFORMATION);
+							// If the last call was answered...
+							// wait for the user to update the contract master first.
+							if (data_.has_confirmed_status())
+							{
+								wxMessageBox("Press Call once you are done updating the contract master.", "Info", wxOK | wxICON_INFORMATION);
+							}
+
+							// Otherwise proceed to the next call.
+							else
+							{
+								on_call_auto_();
+							}
 						}
 
 						update_components_state_();
