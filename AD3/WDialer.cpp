@@ -88,6 +88,9 @@ namespace eg::ad3
 				filter_campaign_->Disable();
 				filter_prio_->Disable();
 				filter_status_->Disable();
+
+				mobile_->Enable();
+				name_->Enable();
 			}
 			else
 			{
@@ -96,12 +99,13 @@ namespace eg::ad3
 				filter_campaign_->Enable();
 				filter_prio_->Enable();
 				filter_status_->Enable();
+
+				mobile_->Disable();
+				name_->Disable();
 			}
 
 			id_->Disable();
 			ucode_->Disable();
-			mobile_->Enable();
-			name_->Enable();
 			remarks_->Enable();
 			tree_->Enable();
 
@@ -170,6 +174,7 @@ namespace eg::ad3
 				filter_campaign_->Disable();
 				filter_prio_->Disable();
 				filter_status_->Disable();
+				remarks_->Enable();
 			}
 			else
 			{
@@ -178,13 +183,14 @@ namespace eg::ad3
 				filter_campaign_->Enable();
 				filter_prio_->Enable();
 				filter_status_->Enable();
+				remarks_->Disable();
 			}
 
 			id_->Disable();
 			ucode_->Disable();
 			mobile_->Disable();
 			name_->Disable();
-			remarks_->Enable();
+
 			tree_->Enable();
 
 			playback_button_->Enable(data_.has_confirmed_status());
