@@ -158,6 +158,7 @@
     <ClInclude Include="PJCall.h" />
     <ClInclude Include="PJCallManualDial.hpp" />
     <ClInclude Include="PJHelper.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ServicePJAccount.h" />
     <ClInclude Include="ServicePJEndpoint.h" />
     <ClInclude Include="WApp.h" />
@@ -169,6 +170,14 @@
     <ClInclude Include="WMDIParentFrame.h" />
     <ClInclude Include="WMDIParentFrameAD3.hpp" />
     <ClInclude Include="WConfigSettings.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="AD3.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\icons\apple-touch-icon.ico" />
+    <Image Include="..\icons\icon2.ico" />
+    <Image Include="..\icons\main.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

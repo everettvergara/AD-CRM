@@ -99,7 +99,7 @@ namespace eg::ad3
 
 	struct DialerData
 	{
-		std::string id;
+		size_t id;
 		std::string ucode;
 		std::string mobile;
 		std::string name;
@@ -108,6 +108,10 @@ namespace eg::ad3
 		std::string time_call_ended;
 		std::string remarks;
 		std::string file_recording;
+		size_t collector_id;
+		size_t uploader_contact_id;
+		time_t call_confirmed;
+		time_t call_ended;
 
 		DialerState state = DialerState::New;
 
@@ -131,7 +135,7 @@ namespace eg::ad3
 
 		void clear()
 		{
-			id.clear();
+			id = 0;
 			//ucode.clear();
 			mobile.clear();
 			name.clear();
@@ -139,14 +143,18 @@ namespace eg::ad3
 			time_call_ended.clear();
 			remarks.clear();
 			file_recording.clear();
+			collector_id = 0;
+			uploader_contact_id = 0;
 			status = "PJSIP_INV_STATE_NULL";
+			call_confirmed = 0;
+			call_ended = 0;
 
 			state = DialerState::New;
 		}
 
 		void from_json(const nlohmann::json& data)
 		{
-			id = data.value("id", "");
+			id = data.value("id", 0);
 			ucode = data.value("ucode", "");
 			mobile = data.value("mobile", "");
 			name = data.value("name", "");
@@ -155,6 +163,8 @@ namespace eg::ad3
 			time_call_ended = data.value("time_call_ended", "");
 			remarks = data.value("remarks", "");
 			file_recording = data.value("file_recording", "");
+			collector_id = data.value("collector_id", 0);
+			uploader_contact_id = data.value("uploader_contact_id", 0);
 
 			state = DialerState::Saved;
 		}
@@ -219,6 +229,8 @@ namespace eg::ad3
 			data["time_call_ended"] = time_call_ended;
 			data["remarks"] = remarks;
 			data["file_recording"] = file_recording;
+			data["collector_id"] = collector_id;
+			data["uploader_contact_id"] = uploader_contact_id;
 
 			return data;
 		}

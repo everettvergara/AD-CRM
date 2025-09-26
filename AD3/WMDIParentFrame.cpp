@@ -1,10 +1,17 @@
 #include "WMDIParentFrame.h"
-
+#include "resource.h"
 namespace eg::ad3
 {
 	void WMDIParentFrame::init(const wxString& title, wxPoint pos, wxSize size, long style)
 	{
 		Create(nullptr, wxID_ANY, title, pos, size, style);
+
+		//SetIcon(wxICON(IDI_MAINICON));
+
+		HICON hIcon = LoadIcon(GetModuleHandle(nullptr),
+			MAKEINTRESOURCE(IDI_MAINICON));
+		::SendMessage((HWND)GetHWND(), WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+		::SendMessage((HWND)GetHWND(), WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 		auto menu_bar = new wxMenuBar;
 

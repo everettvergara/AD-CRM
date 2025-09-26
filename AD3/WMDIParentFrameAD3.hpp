@@ -4,12 +4,18 @@
 
 #include "WConfigSettings.hpp"
 #include "WDialer.h"
+#include "resource.h"
 
 namespace eg::ad3
 {
 	class WMDIParentFrameAD3 final :
 		public WMDIParentFrame
 	{
+	public:
+		//WMDIParentFrameAD3()
+		//{
+		//	SetIcon(wxICON(IDI_MAINICON));
+		//}
 	protected:
 
 		virtual void on_init_menu(wxMenuBar* menu)

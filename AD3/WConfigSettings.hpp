@@ -18,7 +18,7 @@ namespace eg::ad3
 					.parent = parent,
 					.title = "AD3.0 Settings",
 					.pos = wxDefaultPosition,
-					.size = wxSize(400, 450),
+					.size = wxSize(400, 700),
 					.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
 					.form_columns = 2,
 					.has_tree = false
@@ -40,6 +40,13 @@ namespace eg::ad3
 			register_text_input("server_keep_alive_data", "Keep alive data:", settings.server_keep_alive_data);
 			register_checkbox("register_on_add", "Concurrent calls:", settings.register_on_add);
 			register_checkbox("mock", "Mock mode:", settings.mock);
+
+			register_text_input("db_driver", "DB Driver:", settings.db_driver);
+			register_text_input("db_server", "DB Server:", settings.db_server);
+			register_text_input("db_database", "DB Database:", settings.db_database);
+			register_text_input("db_user", "DB User:", settings.db_user);
+			register_text_input("db_password", "DB Password:", settings.db_password, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+			register_text_input("fycrm_path", "CRM Path:", settings.fycrm_path);
 
 			register_button("Save", wxID_OK)->Bind(wxEVT_BUTTON, &WConfigSettings::on_ok_, this);
 			register_button("Cancel", wxID_CANCEL)->Bind(wxEVT_BUTTON, &WConfigSettings::on_cancel_, this);
@@ -64,6 +71,21 @@ namespace eg::ad3
 			auto register_on_add = get<wxCheckBox>("register_on_add")->GetValue();
 			auto mock = get<wxCheckBox>("mock")->GetValue();
 
+			// DB
+			auto db_driver = get<wxTextCtrl>("db_driver")->GetValue();
+			auto db_server = get<wxTextCtrl>("db_server")->GetValue();
+			auto db_database = get<wxTextCtrl>("db_database")->GetValue();
+			auto db_user = get<wxTextCtrl>("db_user")->GetValue();
+			auto db_password = get<wxTextCtrl>("db_password")->GetValue();
+
+			auto fycrm_path = get<wxTextCtrl>("fycrm_path")->GetValue();
+
+			if (db_driver.IsEmpty()) return "DB Driver is empty";
+			if (db_server.IsEmpty()) return "DB Server is empty";
+			if (db_database.IsEmpty()) return "DB Database is empty";
+			if (db_user.IsEmpty()) return "DB User is empty";
+			if (db_password.IsEmpty()) return "DB Password is empty";
+
 			if (server_ip.IsEmpty()) return "Server IP is empty";
 			if (server_port.IsEmpty()) return "Port is empty";
 			if (sip_id.IsEmpty()) return "SIP ID is empty";
@@ -73,6 +95,8 @@ namespace eg::ad3
 			if (server_timeout_secs.IsEmpty()) return "Server timeout is empty";
 			if (server_keep_alive_secs.IsEmpty()) return "Keep alive secs is empty";
 			if (server_keep_alive_data.IsEmpty()) return "Keep alive data is empty";
+
+			if (fycrm_path.IsEmpty()) return "CRM Path is empty";
 
 			auto& settings = ConfigSettings::instance();
 			settings.server_ip = server_ip.ToStdString();
@@ -86,6 +110,14 @@ namespace eg::ad3
 			settings.server_keep_alive_data = server_keep_alive_data.ToStdString();
 			settings.register_on_add = register_on_add;
 			settings.mock = mock;
+
+			settings.db_driver = db_driver.ToStdString();
+			settings.db_server = db_server.ToStdString();
+			settings.db_database = db_database.ToStdString();
+			settings.db_user = db_user.ToStdString();
+			settings.db_password = db_password.ToStdString();
+
+			settings.fycrm_path = fycrm_path.ToStdString();
 
 			return nullptr;
 		}

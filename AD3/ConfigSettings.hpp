@@ -71,7 +71,7 @@ namespace eg::ad3
 			db_database(data.value("db_database", "wmc")),
 			db_user(data.value("db_user", "sa")),
 			db_password(data.value("db_password", "Kerberos2014!")),
-			fycrm_path(data.value("fycrm_path", "c:/fy-crm/fydesigns.exe"))
+			fycrm_path(data.value("fycrm_path", "c:/fy-crm/crm_dialer.exe"))
 		{
 		}
 	};

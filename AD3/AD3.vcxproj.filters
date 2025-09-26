@@ -101,5 +101,24 @@
     <ClInclude Include="WDialerCommon.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="AD3.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\icons\apple-touch-icon.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\icon2.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\main.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

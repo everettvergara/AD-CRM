@@ -12,12 +12,12 @@
 
 namespace eg::ad3
 {
-	constexpr auto k_db_driver = "{SQL Server}";
-	constexpr auto k_db_server = "WIN-0BL4BGRJARA";
-	constexpr auto k_db_database = "wmc";
-	constexpr auto k_db_user = "sa";
-	constexpr auto k_db_password = "Kerberos2014!";
-	constexpr auto k_collector_id = "6";
+	//constexpr auto k_db_driver = "{SQL Server}";
+	//constexpr auto k_db_server = "WIN-0BL4BGRJARA";
+	//constexpr auto k_db_database = "wmc";
+	//constexpr auto k_db_user = "sa";
+	//constexpr auto k_db_password = "Kerberos2014!";
+	//constexpr auto k_collector_id = "6";
 
 	class WDialer :
 		public WChildFrame
@@ -50,6 +50,7 @@ namespace eg::ad3
 		wxButton* call_button_;
 		wxButton* call_again_button_;
 		wxButton* playback_button_;
+		wxButton* cm_button_;
 
 		wxButton* stop_button_;
 		wxButton* save_button_;
@@ -77,6 +78,7 @@ namespace eg::ad3
 		void on_save_(wxCommandEvent&);
 		void on_close_(wxCommandEvent&);
 		void on_playback_(wxCommandEvent&);
+		void on_cm_(wxCommandEvent&);
 
 		void on_call_state_changed_(pjsip_inv_state state);
 

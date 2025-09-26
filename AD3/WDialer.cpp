@@ -9,6 +9,7 @@
 
 #include <nanodbc/nanodbc.h>
 #include "Common/StringHelper.hpp"
+#include "Common/Run.hpp"
 #include "ServicePJAccount.h"
 #include "ConfigSettings.hpp"
 
@@ -37,6 +38,8 @@ namespace eg::ad3
 		stop_button_(nullptr),
 		save_button_(nullptr),
 		cancel_button_(nullptr),
+		playback_button_(nullptr),
+		cm_button_(nullptr),
 		data_()
 
 	{
@@ -56,7 +59,7 @@ namespace eg::ad3
 			filter_to_call_count_->SetValue(std::to_string(filter_.selected_status->to_call_count()));
 		}
 
-		id_->SetValue(data_.id);
+		id_->SetValue(std::to_string(data_.id));
 		ucode_->SetValue(data_.ucode);
 		mobile_->SetValue(data_.mobile);
 		name_->SetValue(data_.name);
@@ -111,6 +114,8 @@ namespace eg::ad3
 			tree_->Enable();
 
 			playback_button_->Disable();
+			cm_button_->Disable();
+
 			new_button_->Disable();
 			call_button_->Enable();
 			call_again_button_->Disable();
@@ -142,6 +147,8 @@ namespace eg::ad3
 			tree_->Disable();
 
 			playback_button_->Disable();
+			cm_button_->Disable();
+
 			new_button_->Disable();
 			call_button_->Disable();
 			call_again_button_->Disable();
@@ -173,6 +180,8 @@ namespace eg::ad3
 			tree_->Disable();
 
 			playback_button_->Disable();
+			cm_button_->Disable();
+
 			new_button_->Disable();
 			call_button_->Disable();
 			call_again_button_->Disable();
@@ -213,6 +222,15 @@ namespace eg::ad3
 			tree_->Enable();
 
 			playback_button_->Enable(data_.has_confirmed_status());
+			if (data_.id > 0 and data_.collector_id > 0)
+			{
+				cm_button_->Enable();
+			}
+			else
+			{
+				cm_button_->Disable();
+			}
+
 			call_button_->Disable();
 			stop_button_->Disable();
 			save_button_->Enable();
@@ -235,6 +253,8 @@ namespace eg::ad3
 			tree_->Disable();
 
 			playback_button_->Disable();
+			cm_button_->Disable();
+
 			new_button_->Disable();
 			call_button_->Disable();
 			call_again_button_->Disable();
@@ -269,6 +289,14 @@ namespace eg::ad3
 			tree_->Enable();
 
 			playback_button_->Enable(data_.has_confirmed_status());
+			if (data_.id > 0 and data_.collector_id > 0)
+			{
+				cm_button_->Enable();
+			}
+			else
+			{
+				cm_button_->Disable();
+			}
 
 			if (not filter_.is_auto)
 			{
@@ -491,7 +519,7 @@ namespace eg::ad3
 	{
 		// Fields
 		register_text("Call details", 300);
-		id_ = register_text_input("id", "CM ID:", data_.id);
+		id_ = register_text_input("id", "CM ID:", std::to_string(data_.id));
 		ucode_ = register_text_input("ucode", "Code:", data_.ucode);
 		register_text("Please input mobile in the following format: 0XXXYYYZZZZ i.e. 09177101995.", 300);
 		mobile_ = register_text_input("mobile", "Mobile to dial:", "");
@@ -506,6 +534,8 @@ namespace eg::ad3
 		file_recording_ = register_text_input("wav_recording", "Playback file:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 		playback_button_ = register_button_field("Play");
 		playback_button_->Bind(wxEVT_BUTTON, &WDialer::on_playback_, this);
+		cm_button_ = register_button_field("Open CRM");
+		cm_button_->Bind(wxEVT_BUTTON, &WDialer::on_cm_, this);
 	}
 
 	void WDialer::register_node_elements_(const wxTreeItemId& node_id, const std::string& path)
@@ -540,11 +570,123 @@ namespace eg::ad3
 					break;
 
 				case PJSIP_INV_STATE_CONFIRMED:
+				{
 					data_.status = "PJSIP_INV_STATE_CONFIRMED";
-					break;
 
+					if (data_.uploader_contact_id > 0)
+					{
+						data_.call_confirmed = time(nullptr);
+						// Update the comment
+						{
+							const auto& settings = ConfigSettings::instance();
+							auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+								settings.db_driver,
+								settings.db_server,
+								settings.db_database,
+								settings.db_user,
+								settings.db_password);
+
+							nanodbc::connection conn(NANODBC_TEXT(db_conn));
+
+							if (not conn.connected())
+							{
+								wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
+								return;
+							}
+
+							nanodbc::statement stmt(conn);
+							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
+							const std::string remarks = std::format("{}", data_.status);
+							stmt.bind(0, &data_.id);
+							stmt.bind(1, &data_.collector_id);
+							stmt.bind(2, remarks.c_str(), remarks.size());
+							stmt.bind(3, &data_.uploader_contact_id);
+							stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
+							stmt.bind(5, data_.status.c_str(), data_.status.size());
+
+							nanodbc::result res = nanodbc::execute(stmt);
+						}
+
+						// Run the CRM
+
+						const auto& settings = ConfigSettings::instance();
+
+						eg::sys::run(settings.fycrm_path, std::format("{},{}", data_.collector_id, data_.id));
+					}
+					break;
+				}
 				case PJSIP_INV_STATE_DISCONNECTED:
 				{
+					if (data_.uploader_contact_id > 0)
+					{
+						if (data_.status not_eq "PJSIP_INV_STATE_CONFIRMED")
+						{
+							const auto& settings = ConfigSettings::instance();
+							auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+								settings.db_driver,
+								settings.db_server,
+								settings.db_database,
+								settings.db_user,
+								settings.db_password);
+
+							nanodbc::connection conn(NANODBC_TEXT(db_conn));
+
+							if (not conn.connected())
+							{
+								wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
+								return;
+							}
+
+							nanodbc::statement stmt(conn);
+							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
+							const std::string remarks = std::format("{}", data_.status);
+							const size_t uploader_contact_id = 0;
+
+							stmt.bind(0, &data_.id);
+							stmt.bind(1, &data_.collector_id);
+							stmt.bind(2, remarks.c_str(), remarks.size());
+							stmt.bind(3, &uploader_contact_id);
+							stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
+							stmt.bind(5, data_.status.c_str(), data_.status.size());
+
+							nanodbc::result res = nanodbc::execute(stmt);
+						}
+						else
+						{
+							data_.call_ended = time(nullptr);
+							auto time_elapsed = data_.call_ended - data_.call_confirmed;
+							const auto& settings = ConfigSettings::instance();
+							auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+								settings.db_driver,
+								settings.db_server,
+								settings.db_database,
+								settings.db_user,
+								settings.db_password);
+
+							nanodbc::connection conn(NANODBC_TEXT(db_conn));
+
+							if (not conn.connected())
+							{
+								wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
+								return;
+							}
+
+							nanodbc::statement stmt(conn);
+							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
+							const std::string remarks = std::format("Conversation Time: {}s Playback: {}", static_cast<size_t>(time_elapsed), data_.file_recording);
+
+							const size_t uploader_contact_id = 0;
+							stmt.bind(0, &data_.id);
+							stmt.bind(1, &data_.collector_id);
+							stmt.bind(2, remarks.c_str(), remarks.size());
+							stmt.bind(3, &uploader_contact_id);
+							stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
+							stmt.bind(5, data_.status.c_str(), data_.status.size());
+
+							nanodbc::result res = nanodbc::execute(stmt);
+						}
+					}
+
 					auto should_stop_auto = (data_.state == DialerState::Stopping);
 
 					{
@@ -620,9 +762,17 @@ namespace eg::ad3
 			return;
 		}
 
-		const auto retrieve_sql = std::format("select a.cm_id, a.contact_name, a.mobile, a.remarks from vw_ad_lr_priority_new as a where next_id = {}", filter_.selected_status->next_id);
+		const auto retrieve_sql = std::format("select a.cm_id, a.contact_name, a.mobile, a.remarks, a.collector_id, a.uploader_contact_id from vw_ad_lr_priority_new as a where next_id = {}", filter_.selected_status->next_id);
 
-		auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};", k_db_driver, k_db_server, k_db_database, k_db_user, k_db_password);
+		const auto& settings = ConfigSettings::instance();
+
+		auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+			settings.db_driver,
+			settings.db_server,
+			settings.db_database,
+			settings.db_user,
+			settings.db_password);
+
 		nanodbc::connection conn(NANODBC_TEXT(db_conn));
 
 		if (not conn.connected())
@@ -638,10 +788,12 @@ namespace eg::ad3
 		data_.clear();
 		if (results.next())
 		{
-			data_.id = results.get<std::string>(0);
+			data_.id = results.get<size_t>(0);
 			data_.name = results.get<std::string>(1);
 			data_.mobile = results.get<std::string>(2);
 			data_.remarks = results.get<std::string>(3);
+			data_.collector_id = results.get<size_t>(4);
+			data_.uploader_contact_id = results.get<size_t>(5);
 			data_.ucode = filter_.selected_status->ucode;
 			auto next_id = filter_.selected_status->next_id;
 			nanodbc::statement stmt(conn);
@@ -975,11 +1127,29 @@ namespace eg::ad3
 		wxMessageBox("Recording played successfully.", "Information");
 	}
 
+	void WDialer::on_cm_(wxCommandEvent&)
+	{
+		if (data_.id == 0 or data_.collector_id == 0)
+		{
+			wxMessageBox("No CM associated with this call", "Information", wxOK | wxICON_INFORMATION, this);
+			return;
+		}
+
+		const auto& settings = ConfigSettings::instance();
+		eg::sys::run(settings.fycrm_path, std::format("{},{}", data_.collector_id, data_.id));
+	}
+
 	void WDialer::populate_master_()
 	{
 		if (filter_.client_master.empty())
 		{
-			auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};", k_db_driver, k_db_server, k_db_database, k_db_user, k_db_password);
+			const auto& settings = ConfigSettings::instance();
+			auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+				settings.db_driver,
+				settings.db_server,
+				settings.db_database,
+				settings.db_user,
+				settings.db_password);
 			nanodbc::connection conn(NANODBC_TEXT(db_conn));
 
 			if (not conn.connected())
@@ -990,7 +1160,7 @@ namespace eg::ad3
 			}
 
 			auto sql = std::format("select	a.collector_id, a.client_id, a.client_name, a.client_campaign_id, a.client_campaign_name, a.prio_type_id, a.prio_type, a.wmc_status_id, a.wmc_status_name, a.name, a.min_id, a.max_id, a.next_id, a.ucode "
-				"from	vw_ad_cache_priority_series as a where a.collector_id = {}", 6);
+				"from	vw_ad_cache_priority_series as a where a.sip_no = '{}'", settings.sip_id);
 			nanodbc::result results = nanodbc::execute(
 				conn,
 				NANODBC_TEXT(sql));

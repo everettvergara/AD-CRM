@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <wx/wx.h>
+#include "resource.h"
 
 namespace eg::ad3
 {
@@ -19,6 +20,18 @@ namespace eg::ad3
 
 		void init(const wxString& title, wxPoint pos, wxSize size, long style = wxDEFAULT_FRAME_STYLE);
 
+		//wxMDIClientWindow* OnCreateClient() override
+		//{
+		//	auto* client = wxMDIParentFrame::OnCreateClient();
+
+		//	// Blessed wx call – ensures it happens after the client exists
+		//	HICON hIcon = LoadIcon(GetModuleHandle(nullptr),
+		//		MAKEINTRESOURCE(IDI_MAINICON));
+		//	::SendMessage((HWND)GetHWND(), WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+		//	::SendMessage((HWND)GetHWND(), WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+
+		//	return client;
+		//}
 	protected:
 		std::unordered_map<const char*, wxWeakRef<wxMDIChildFrame>> child_ids;
 

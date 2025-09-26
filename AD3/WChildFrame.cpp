@@ -1,5 +1,5 @@
 #include "WChildFrame.h"
-
+#include "resource.h"
 namespace eg::ad3
 {
 	WChildFrame::WChildFrame(const WChildProp& p) :
@@ -12,6 +12,12 @@ namespace eg::ad3
 		sizer_buttons(new wxBoxSizer(wxHORIZONTAL))
 	{
 		assert(p.form_columns > 0 and p.form_columns % 2 == 0);
+
+		SetIcon(wxICON(IDI_MAINICON));
+		HICON hIcon = LoadIcon(GetModuleHandle(nullptr),
+			MAKEINTRESOURCE(IDI_MAINICON));
+		::SendMessage((HWND)GetHWND(), WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+		::SendMessage((HWND)GetHWND(), WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 		// Make input fields growable
 		for (int i = 1; i < p.form_columns; i += 2)
