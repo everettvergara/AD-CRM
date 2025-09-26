@@ -1160,7 +1160,7 @@ namespace eg::ad3
 			}
 
 			auto sql = std::format("select	a.collector_id, a.client_id, a.client_name, a.client_campaign_id, a.client_campaign_name, a.prio_type_id, a.prio_type, a.wmc_status_id, a.wmc_status_name, a.name, a.min_id, a.max_id, a.next_id, a.ucode "
-				"from	vw_ad_cache_priority_series as a where a.sip_no = '{}'", settings.sip_id);
+				"from	vw_ad_cache_priority_series as a where a.sip_no = '{}' order by a.client_name, a.client_campaign_name, a.prio_type, a.wmc_status_name", settings.sip_id);
 			nanodbc::result results = nanodbc::execute(
 				conn,
 				NANODBC_TEXT(sql));
@@ -1191,11 +1191,10 @@ namespace eg::ad3
 				}
 
 				if (const auto prio_type_id = results.get<size_t>(5);
-					prio_type_id not_eq last_client_campaign_id)
+					prio_type_id not_eq last_prio_type_id)
 				{
 					filter_.prio_master.try_emplace(prio_type_id, results.get<std::string>(6));
 					last_prio_type_id = prio_type_id;
-
 					filter_.clients.back().campaigns.back().prios.emplace_back(prio_type_id);
 				}
 
