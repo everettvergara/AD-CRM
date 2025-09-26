@@ -23,6 +23,13 @@ namespace eg::ad3
 		bool register_on_add;
 		bool mock;
 
+		std::string db_driver;
+		std::string db_server;
+		std::string db_database;
+		std::string db_user;
+		std::string db_password;
+		std::string fycrm_path;
+
 		nlohmann::json to_json() const override
 		{
 			return nlohmann::json
@@ -37,7 +44,13 @@ namespace eg::ad3
 				{"server_keep_alive_secs", server_keep_alive_secs},
 				{"server_keep_alive_data", server_keep_alive_data},
 				{"register_on_add", register_on_add},
-				{"mock", true}
+				{"mock", mock},
+				{"db_driver", db_driver},
+				{"db_server", db_server},
+				{"db_database", db_database},
+				{"db_user", db_user},
+				{"db_password", db_password},
+				{"fycrm_path", fycrm_path}
 			};
 		}
 
@@ -52,8 +65,13 @@ namespace eg::ad3
 			server_keep_alive_secs(data.value("server_timeout_secs", 10u)),
 			server_keep_alive_data(data.value("server_keep_alive_data", R"(\r\n)")),
 			register_on_add(data.value("register_on_add", false)),
-			mock(data.value("mock", true))
-
+			mock(data.value("mock", true)),
+			db_driver(data.value("db_driver", "{SQL Server}")),
+			db_server(data.value("db_server", "WIN-0BL4BGRJARA")),
+			db_database(data.value("db_database", "wmc")),
+			db_user(data.value("db_user", "sa")),
+			db_password(data.value("db_password", "Kerberos2014!")),
+			fycrm_path(data.value("fycrm_path", "c:/fy-crm/fydesigns.exe"))
 		{
 		}
 	};
