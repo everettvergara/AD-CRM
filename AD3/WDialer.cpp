@@ -13,6 +13,7 @@
 #include "ServicePJAccount.h"
 #include "ConfigSettings.hpp"
 
+// TODO: to call count not reset when client, campaign, prio changed
 namespace eg::ad3
 {
 	WDialer::WDialer(wxMDIParentFrame* parent) :
@@ -1167,7 +1168,7 @@ namespace eg::ad3
 
 			auto last_client_id = 0;
 			auto last_client_campaign_id = 0;
-			auto last_prio_type_id = 0;
+			auto last_prio_type_id = -1;
 			auto last_client_status_id = 0;
 
 			while (results.next())
@@ -1179,6 +1180,9 @@ namespace eg::ad3
 				{
 					filter_.client_master.try_emplace(client_id, results.get<std::string>(2));
 					last_client_id = client_id;
+					last_client_campaign_id = 0;
+					last_prio_type_id = -1;
+					last_client_status_id = 0;
 					filter_.clients.emplace_back(client_id);
 				}
 
@@ -1187,8 +1191,13 @@ namespace eg::ad3
 				{
 					filter_.campaign_master.try_emplace(client_campaign_id, results.get<std::string>(4));
 					last_client_campaign_id = client_campaign_id;
+					last_prio_type_id = -1;
+					last_client_status_id = 0;
 					filter_.clients.back().campaigns.emplace_back(client_campaign_id);
 				}
+				//LOG_II("7");
+				//LOG_II("prio_type_id {}", results.get<size_t>(5));
+				//LOG_II("last_prio_type_id {}", last_prio_type_id);
 
 				if (const auto prio_type_id = results.get<size_t>(5);
 					prio_type_id not_eq last_prio_type_id)
@@ -1196,13 +1205,18 @@ namespace eg::ad3
 					filter_.prio_master.try_emplace(prio_type_id, results.get<std::string>(6));
 					last_prio_type_id = prio_type_id;
 					filter_.clients.back().campaigns.back().prios.emplace_back(prio_type_id);
+					//LOG_II("size: {}", filter_.clients.back().campaigns.back().prios.size());
 				}
 
 				last_client_status_id = results.get<size_t>(7);
 				filter_.status_master.try_emplace(last_client_status_id, results.get<std::string>(8));
 
-				//status, min, max, next
-				filter_.clients.back().campaigns.back().prios.back().status_series.emplace_back(last_client_status_id, results.get<size_t>(10), results.get<size_t>(11), results.get<size_t>(12), results.get<std::string>(13));
+				filter_.clients.back().campaigns.back().prios.back().status_series.emplace_back(
+					last_client_status_id,
+					results.get<size_t>(10),
+					results.get<size_t>(11),
+					results.get<size_t>(12),
+					results.get<std::string>(13));
 			}
 
 			for (const auto& [id, name] : filter_.client_master)

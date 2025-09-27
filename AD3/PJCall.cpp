@@ -3,12 +3,14 @@
 #include <stdexcept>
 #include "ServicePJEndpoint.h"
 #include "PJHelper.h"
+#include "Common/Log.hpp"
 
 namespace eg::ad3
 {
 	PJCall::PJCall(PJAccount& account) :
 		pj::Call(*dynamic_cast<pj::Account*>(&account)),
-		last_call_state(PJSIP_INV_STATE_NULL)
+		last_call_state(PJSIP_INV_STATE_NULL),
+		ring_tone_port_(PJSUA_INVALID_ID)
 	{
 		timeout_thread_ = std::thread([this]
 			{
@@ -37,6 +39,7 @@ namespace eg::ad3
 
 	PJCall::~PJCall()
 	{
+		stop_local_ringback();
 		timeout_thread_.join();
 		wait_until_state_is_disconnected();
 	}
@@ -145,5 +148,48 @@ namespace eg::ad3
 	void PJCall::on_call_media_state_on_confirmed(pj::AudioMedia&)
 	{
 		// Init resources
+	}
+
+	void PJCall::play_local_ringback()
+	{
+		if (ring_tone_port_ not_eq PJSUA_INVALID_ID)
+		{
+			return;
+		}
+
+		pj_status_t status;
+		pj_pool_t* pool = pjsua_pool_create("ringback", 512, 512);
+
+		pjmedia_port* tone_port{};
+		status = pjmedia_tonegen_create(pool, 8000, 1, 160, 16, PJMEDIA_TONEGEN_LOOP, &tone_port);
+		if (status not_eq PJ_SUCCESS)
+		{
+			LOG_XX("Failed to create tone generator");
+			return;
+		}
+
+		pjmedia_tone_desc tones[1];
+		tones[0].freq1 = 440;
+		tones[0].freq2 = 480;
+		tones[0].on_msec = 2000;
+		tones[0].off_msec = 4000;
+		tones[0].volume = PJMEDIA_TONEGEN_VOLUME;
+
+		pjmedia_tonegen_play(tone_port, 1, tones, PJMEDIA_TONEGEN_LOOP);
+
+		pjsua_conf_add_port(pool, tone_port, &ring_tone_port_);
+		pjsua_conf_connect(ring_tone_port_, 0);
+	}
+
+	void PJCall::stop_local_ringback()
+	{
+		if (ring_tone_port_ == PJSUA_INVALID_ID)
+		{
+			return;
+		}
+
+		pjsua_conf_disconnect(ring_tone_port_, 0);
+		pjsua_conf_remove_port(ring_tone_port_);
+		ring_tone_port_ = PJSUA_INVALID_ID;
 	}
 }

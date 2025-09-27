@@ -42,6 +42,9 @@ namespace eg::ad3
 		virtual void on_call_state_disconnected();
 		virtual void on_call_media_state_on_confirmed(pj::AudioMedia&);
 
+		void play_local_ringback();
+		void stop_local_ringback();
+
 	private:
 
 		//PJSIP_INV_STATE_NULL,           /**< Before INVITE is sent or received  */
@@ -55,5 +58,6 @@ namespace eg::ad3
 		std::thread timeout_thread_;
 		std::mutex mutex_;
 		std::condition_variable cv_;
+		pjsua_conf_port_id ring_tone_port_;
 	};
 }
