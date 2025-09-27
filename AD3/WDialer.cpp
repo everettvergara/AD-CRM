@@ -8,6 +8,7 @@
 #include <miniaudio.h>
 
 #include <nanodbc/nanodbc.h>
+#include <wx/event.h>
 #include "Common/StringHelper.hpp"
 #include "Common/Run.hpp"
 #include "ServicePJAccount.h"
@@ -55,28 +56,38 @@ namespace eg::ad3
 
 	void WDialer::update_components_from_data_()
 	{
-		if (filter_.is_auto)
+		if (filter_.is_auto and filter_.selected_status)
 		{
-			filter_to_call_count_->SetValue(std::to_string(filter_.selected_status->to_call_count()));
-		}
-
-		id_->SetValue(std::to_string(data_.id));
-		ucode_->SetValue(data_.ucode);
-		mobile_->SetValue(data_.mobile);
-		name_->SetValue(data_.name);
-		status_->SetValue(data_.status);
-		time_of_call_->SetValue(data_.time_of_call);
-		time_call_ended_->SetValue(data_.time_call_ended);
-		remarks_->SetValue(data_.remarks);
-
-		if (data_.has_confirmed_status())
-		{
-			file_recording_->SetValue(data_.file_recording);
+			filter_to_call_count_->ChangeValue(std::to_string(filter_.selected_status->to_call_count()));
 		}
 		else
 		{
-			file_recording_->SetValue("");
+			filter_to_call_count_->ChangeValue("0");
 		}
+
+		id_->ChangeValue(std::to_string(data_.id));
+		ucode_->ChangeValue(data_.ucode);
+		mobile_->ChangeValue(data_.mobile);
+		name_->ChangeValue(data_.name);
+		status_->ChangeValue(data_.status);
+		time_of_call_->ChangeValue(data_.time_of_call);
+		time_call_ended_->ChangeValue(data_.time_call_ended);
+		remarks_->ChangeValue(data_.remarks);
+
+		if (data_.has_confirmed_status())
+		{
+			file_recording_->ChangeValue(data_.file_recording);
+		}
+		else
+		{
+			file_recording_->ChangeValue("");
+		}
+
+		wxTheApp->CallAfter([this]
+			{
+				panel->Layout();
+				panel->Refresh();
+			});
 	}
 
 	void WDialer::update_components_state_()
@@ -413,6 +424,7 @@ namespace eg::ad3
 				}
 
 				update_components_state_();
+				//update_components_from_data_();
 			});
 
 		filter_client_ = register_dropdown("filter_client", "Select Client:");
@@ -442,6 +454,7 @@ namespace eg::ad3
 				}
 
 				data_.clear();
+				//update_components_from_data_();
 			});
 
 		filter_campaign_ = register_dropdown("filter_client_campaign", "Select Campaign:");
@@ -468,6 +481,7 @@ namespace eg::ad3
 				}
 
 				data_.clear();
+				//update_components_from_data_();
 			});
 
 		filter_prio_ = register_dropdown("filter_prio", "Select Prio:");
@@ -491,6 +505,7 @@ namespace eg::ad3
 				}
 
 				data_.clear();
+				//update_components_from_data_();
 			});
 
 		filter_status_ = register_dropdown("filter_status", "Select Status:");
@@ -509,7 +524,6 @@ namespace eg::ad3
 
 				data_.clear();
 				data_.ucode = filter_.selected_status->ucode;
-
 				update_components_from_data_();
 			});
 
@@ -1144,6 +1158,7 @@ namespace eg::ad3
 	{
 		if (filter_.client_master.empty())
 		{
+			//LOG_II("1");
 			const auto& settings = ConfigSettings::instance();
 			auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
 				settings.db_driver,
@@ -1153,6 +1168,8 @@ namespace eg::ad3
 				settings.db_password);
 			nanodbc::connection conn(NANODBC_TEXT(db_conn));
 
+			//LOG_II("2");
+
 			if (not conn.connected())
 			{
 				wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
@@ -1160,6 +1177,7 @@ namespace eg::ad3
 				return;
 			}
 
+			//LOG_II("3");
 			auto sql = std::format("select	a.collector_id, a.client_id, a.client_name, a.client_campaign_id, a.client_campaign_name, a.prio_type_id, a.prio_type, a.wmc_status_id, a.wmc_status_name, a.name, a.min_id, a.max_id, a.next_id, a.ucode "
 				"from	vw_ad_cache_priority_series as a where a.sip_no = '{}' order by a.client_name, a.client_campaign_name, a.prio_type, a.wmc_status_name", settings.sip_id);
 			nanodbc::result results = nanodbc::execute(
@@ -1171,9 +1189,12 @@ namespace eg::ad3
 			auto last_prio_type_id = -1;
 			auto last_client_status_id = 0;
 
+			//LOG_II("4");
 			while (results.next())
 			{
 				// Save to Master file:
+
+				//LOG_II("5");
 
 				if (const auto client_id = results.get<size_t>(1);
 					client_id not_eq last_client_id)
@@ -1186,6 +1207,8 @@ namespace eg::ad3
 					filter_.clients.emplace_back(client_id);
 				}
 
+				//LOG_II("6");
+
 				if (const auto client_campaign_id = results.get<size_t>(3);
 					client_campaign_id not_eq last_client_campaign_id)
 				{
@@ -1195,9 +1218,8 @@ namespace eg::ad3
 					last_client_status_id = 0;
 					filter_.clients.back().campaigns.emplace_back(client_campaign_id);
 				}
+
 				//LOG_II("7");
-				//LOG_II("prio_type_id {}", results.get<size_t>(5));
-				//LOG_II("last_prio_type_id {}", last_prio_type_id);
 
 				if (const auto prio_type_id = results.get<size_t>(5);
 					prio_type_id not_eq last_prio_type_id)
@@ -1208,8 +1230,27 @@ namespace eg::ad3
 					//LOG_II("size: {}", filter_.clients.back().campaigns.back().prios.size());
 				}
 
+				//LOG_II("8");
+
 				last_client_status_id = results.get<size_t>(7);
 				filter_.status_master.try_emplace(last_client_status_id, results.get<std::string>(8));
+
+				//LOG_II("9");
+
+				//if (filter_.clients.empty())
+				//{
+				//	LOG_II("10");
+				//}
+
+				//if (filter_.clients.back().campaigns.empty())
+				//{
+				//	LOG_II("11");
+				//}
+
+				//if (filter_.clients.back().campaigns.back().prios.empty())
+				//{
+				//	LOG_II("12");
+				//}
 
 				filter_.clients.back().campaigns.back().prios.back().status_series.emplace_back(
 					last_client_status_id,
@@ -1219,10 +1260,13 @@ namespace eg::ad3
 					results.get<std::string>(13));
 			}
 
+			//LOG_II("End");
+
 			for (const auto& [id, name] : filter_.client_master)
 			{
 				filter_client_->Append(name, reinterpret_cast<void*>(id));
 			}
+			//LOG_II("End2");
 		}
 	}
 }
