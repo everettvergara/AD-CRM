@@ -705,7 +705,7 @@ namespace eg::ad3
 					auto should_stop_auto = (data_.state == DialerState::Stopping);
 
 					{
-						std::lock_guard lock(call_mutex_);;
+						std::lock_guard lock(ServicePJAccount::instance().call_mutex);;
 						current_call_.reset();
 						data_.time_call_ended = eg::string::datetime_to_formatted_string();
 						data_.state = DialerState::JustEnded;
@@ -862,7 +862,7 @@ namespace eg::ad3
 	{
 		{
 			data_.file_recording = generate_wav_filename(data_.mobile, validated_name);
-			std::lock_guard lock(call_mutex_);
+			std::lock_guard lock(ServicePJAccount::instance().call_mutex);
 
 			current_call_ = std::make_shared<PJCallManualDial>(
 				ServicePJAccount::instance().account,
@@ -919,7 +919,7 @@ namespace eg::ad3
 	void WDialer::on_stop_(wxCommandEvent&)
 	{
 		{
-			std::lock_guard lock(call_mutex_);
+			std::lock_guard lock(ServicePJAccount::instance().call_mutex);
 			current_call_->hangup_call();
 		}
 

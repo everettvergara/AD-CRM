@@ -57,7 +57,7 @@ namespace eg::ad3
 		wxButton* cancel_button_;
 
 		std::shared_ptr<PJCallManualDial> current_call_;
-		std::mutex call_mutex_;
+		//std::mutex call_mutex_;
 
 		DialerFilter filter_;
 		DialerData data_;

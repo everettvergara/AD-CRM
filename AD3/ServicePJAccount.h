@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <mutex>
 #include <pjsua2.hpp>
 #include "PJAccount.h"
 #include "Common/NoCopyMove.hpp"
@@ -13,7 +14,9 @@ namespace eg::ad3
 		public eg::sys::NoCopyMove
 	{
 	public:
+
 		PJAccount account;
+		std::mutex call_mutex;
 
 		static void init();
 		static ServicePJAccount& instance();
