@@ -499,7 +499,7 @@ namespace eg::ad3
 				filter_status_->Clear();
 				filter_.selected_status = nullptr;
 
-				for (const auto& [status_id, _, __, ___, ____] : fprio->status_series)
+				for (const auto& [status_id, _, __, ___, ____, _____, ______] : fprio->status_series)
 				{
 					filter_status_->Append(filter_.status_master.at(status_id), reinterpret_cast<void*>(status_id));
 				}
@@ -777,10 +777,7 @@ namespace eg::ad3
 			return;
 		}
 
-		const auto retrieve_sql = std::format("select a.cm_id, a.contact_name, a.mobile, a.remarks, a.collector_id, a.uploader_contact_id from vw_ad_lr_priority_new as a where next_id = {}", filter_.selected_status->next_id);
-
 		const auto& settings = ConfigSettings::instance();
-
 		auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
 			settings.db_driver,
 			settings.db_server,
@@ -795,6 +792,38 @@ namespace eg::ad3
 			wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
 			return;
 		}
+
+		// Get the updated common pool since
+		// multiple agents could be calling the same pool
+		if (filter_.selected_status->common_pool)
+		{
+			const auto next_sql = std::format("exec sp_ad_tr_get_next_id {}", filter_.selected_status->next_id);
+
+			nanodbc::result results = nanodbc::execute(
+				conn,
+				NANODBC_TEXT(next_sql));
+			if (results.next())
+			{
+				auto next_id = results.get<int>(0);
+				if (next_id == -1 or next_id >= filter_.selected_status->max_id)
+				{
+					conn.disconnect();
+
+					filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
+
+					wxMessageBox("No more records to call for this option.", "Info", wxOK | wxICON_INFORMATION, this);
+					update_components_from_data_();
+
+					return;
+				}
+				else
+				{
+					filter_.selected_status->next_id = next_id;
+				}
+			}
+		}
+
+		const auto retrieve_sql = std::format("select a.cm_id, a.contact_name, a.mobile, a.remarks, a.collector_id, a.uploader_contact_id from vw_ad_lr_priority_new as a where next_id = {}", filter_.selected_status->next_id);
 
 		nanodbc::result results = nanodbc::execute(
 			conn,
@@ -1178,7 +1207,7 @@ namespace eg::ad3
 			}
 
 			//LOG_II("3");
-			auto sql = std::format("select	a.collector_id, a.client_id, a.client_name, a.client_campaign_id, a.client_campaign_name, a.prio_type_id, a.prio_type, a.wmc_status_id, a.wmc_status_name, a.name, a.min_id, a.max_id, a.next_id, a.ucode "
+			auto sql = std::format("select	a.collector_id, a.client_id, a.client_name, a.client_campaign_id, a.client_campaign_name, a.prio_type_id, a.prio_type, a.wmc_status_id, a.wmc_status_name, a.name, a.min_id, a.max_id, a.next_id, a.ucode, a.common_pool, a.cache_id "
 				"from	vw_ad_cache_priority_series as a where a.sip_no = '{}' order by a.client_name, a.client_campaign_name, a.prio_type, a.wmc_status_name", settings.sip_id);
 			nanodbc::result results = nanodbc::execute(
 				conn,
@@ -1257,7 +1286,9 @@ namespace eg::ad3
 					results.get<size_t>(10),
 					results.get<size_t>(11),
 					results.get<size_t>(12),
-					results.get<std::string>(13));
+					results.get<std::string>(13),
+					results.get<int>(14),
+					results.get<int>(15));
 			}
 
 			//LOG_II("End");
