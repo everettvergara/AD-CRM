@@ -55,8 +55,10 @@ namespace eg::ad3
 				tp_config.port = k_endpoint_port_no;
 				return tp_config;
 			}());
+		LOG_II("ServicePJEndpoint::ServicePJEndpoint: Transport Created");
 
 		ep.libStart();
+		LOG_II("ServicePJEndpoint::ServicePJEndpoint: Lib Started");
 	}
 
 	void ServicePJEndpoint::init()

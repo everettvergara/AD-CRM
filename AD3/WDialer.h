@@ -24,7 +24,7 @@ namespace eg::ad3
 	{
 	public:
 
-		WDialer(wxMDIParentFrame* parent);
+		WDialer(wxMDIParentFrame* parent, const char* title);
 
 	protected:
 

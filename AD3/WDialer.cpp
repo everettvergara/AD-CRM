@@ -17,12 +17,12 @@
 // TODO: to call count not reset when client, campaign, prio changed
 namespace eg::ad3
 {
-	WDialer::WDialer(wxMDIParentFrame* parent) :
+	WDialer::WDialer(wxMDIParentFrame* parent, const char* title) :
 		WChildFrame(
 			WChildProp
 			{
 				.parent = parent,
-				.title = "Auto / Manual Dialer",
+				.title = title,
 				.pos = wxDefaultPosition,
 				.size = wxSize(800, 800),
 				.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),

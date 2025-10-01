@@ -55,7 +55,7 @@ namespace eg::ad3
 			static constexpr auto id = "dialer1";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this);
+				auto child = new WDialer(this, "Dialer - 1");
 				child_ids[id] = child;
 
 				return;
@@ -67,7 +67,7 @@ namespace eg::ad3
 			static constexpr auto id = "dialer2";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this);
+				auto child = new WDialer(this, "Dialer - 2");
 				child_ids[id] = child;
 
 				return;
@@ -79,7 +79,7 @@ namespace eg::ad3
 			static constexpr auto id = "dialer3";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this);
+				auto child = new WDialer(this, "Dialer - 3");
 				child_ids[id] = child;
 
 				return;
@@ -91,7 +91,7 @@ namespace eg::ad3
 			static constexpr auto id = "dialer4";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this);
+				auto child = new WDialer(this, "Dialer - 4");
 				child_ids[id] = child;
 
 				return;
@@ -103,7 +103,7 @@ namespace eg::ad3
 			static constexpr auto id = "dialer5";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this);
+				auto child = new WDialer(this, "Dialer - 5");
 				child_ids[id] = child;
 
 				return;
@@ -115,7 +115,7 @@ namespace eg::ad3
 			static constexpr auto id = "dialer6";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this);
+				auto child = new WDialer(this, "Dialer - 6");
 				child_ids[id] = child;
 
 				return;

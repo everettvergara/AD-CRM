@@ -13,6 +13,7 @@ namespace eg::ad3
 	{
 		LOG_INSTANCE;
 
+		LOG_I("PJAccount::PJAccount: Creating PJ Account");
 		this->create([this]
 			{
 				pj::AccountConfig account_config{};
