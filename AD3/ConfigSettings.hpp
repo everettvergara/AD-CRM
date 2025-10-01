@@ -66,7 +66,7 @@ namespace eg::ad3
 			server_keep_alive_data(data.value("server_keep_alive_data", R"(\r\n)")),
 			register_on_add(data.value("register_on_add", false)),
 			mock(data.value("mock", true)),
-			db_driver(data.value("db_driver", "{SQL Server}")),
+			db_driver(data.value("db_driver", "{SQL Server Native Client 11.0}")),
 			db_server(data.value("db_server", "WIN-0BL4BGRJARA")),
 			db_database(data.value("db_database", "wmc")),
 			db_user(data.value("db_user", "sa")),

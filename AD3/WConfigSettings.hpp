@@ -38,7 +38,7 @@ namespace eg::ad3
 			register_text_input("server_timeout_secs", "Server timeout (secs):", std::to_string(settings.server_timeout_secs));
 			register_text_input("server_keep_alive_secs", "Keep alive (secs):", std::to_string(settings.server_keep_alive_secs));
 			register_text_input("server_keep_alive_data", "Keep alive data:", settings.server_keep_alive_data);
-			register_checkbox("register_on_add", "Concurrent calls:", settings.register_on_add);
+			register_checkbox("register_on_add", "Register on add:", settings.register_on_add);
 			register_checkbox("mock", "Mock mode:", settings.mock);
 
 			register_text_input("db_driver", "DB Driver:", settings.db_driver);
