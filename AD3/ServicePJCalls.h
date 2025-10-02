@@ -16,11 +16,13 @@ namespace eg::ad3
 	public:
 
 		std::unordered_map<int, std::shared_ptr<PJCallManualDial>> calls_;
+		//std::optional<bool> playing_wav_;
 
 		static void init();
 		static ServicePJCalls& instance();
 		static void shutdown();
 
+		bool play_wav(const std::string& wav_filename);
 		int  make_call(std::function<void(pjsip_inv_state, pj::CallInfo info)> fn, const std::string& wav_filename, const std::string& mobile);
 		void hangup_all_calls_except(int except_call);
 		void hangup_all_calls();

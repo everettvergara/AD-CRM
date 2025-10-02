@@ -30,6 +30,53 @@ namespace eg::ad3
 			}
 		}
 
+		void play_wav(const std::string& filename)
+		{
+			// Cannot play if something is playing....
+			if (not playing_.empty())
+			{
+				return;
+			}
+
+			pjmedia_port* port = nullptr;
+			if (const auto status = pjmedia_wav_player_port_create(pool_, filename.c_str(), 0, 0, 0, &port);
+				status != PJ_SUCCESS)
+			{
+				return;
+			}
+
+			//pjsua_conf_port_id
+			wav_port_ = PJSUA_INVALID_ID;
+
+			if (const auto status = pjsua_conf_add_port(pool_, port, &wav_port_); status != PJ_SUCCESS) {
+				pjmedia_port_destroy(port);
+				return;
+			}
+
+			pjsua_conf_connect(wav_port_, 0);
+
+			bool finished = false;
+			pjmedia_wav_player_set_eof_cb(port, &finished,
+				[](pjmedia_port*, void* user_data) -> pj_status_t {
+					auto f = static_cast<bool*>(user_data);
+					*f = true;
+					return PJ_SUCCESS;
+				});
+
+			while (not finished)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			}
+
+			pjsua_conf_disconnect(wav_port_, 0);
+			pjsua_conf_remove_port(wav_port_);
+			pjmedia_port_destroy(port);
+
+			wav_port_ = PJSUA_INVALID_ID;
+
+			return;
+		}
+
 		bool play_local_ringback(int id)
 		{
 			std::lock_guard lock(wav_mutex_);

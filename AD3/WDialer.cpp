@@ -1200,76 +1200,33 @@ namespace eg::ad3
 		Close(true);
 	}
 
-	static pj_status_t on_wav_eof(pjmedia_port* /*port*/, void* user_data)
-	{
-		auto finished = static_cast<bool*>(user_data);
-		*finished = true;
-		return PJ_SUCCESS; // you MUST return pj_status_t
-	}
+	//static pj_status_t on_wav_eof(pjmedia_port* /*port*/, void* user_data)
+	//{
+	//	auto finished = static_cast<bool*>(user_data);
+	//	*finished = true;
+	//	return PJ_SUCCESS; // you MUST return pj_status_t
+	//}
+
 	void WDialer::on_playback_(wxCommandEvent&)
 	{
 		auto orig_state = data_.state;
 		data_.state = DialerState::PlayingWav;
-		wxTheApp->CallAfter([this] {
+		wxTheApp->CallAfter([this, orig_state] {
 			update_components_state_();
+
+			// Stupidly Blocking
+			auto result = ServicePJCalls::instance().play_wav(data_.file_recording);
+
+			data_.state = orig_state;
+			update_components_state_();
+			if (not result)
+			{
+				wxMessageBox("Cannot play recording when there's an active call.", this->GetTitle());
+				return;
+			}
+
+			wxMessageBox("Recording played successfully.", this->GetTitle());
 			});
-
-		//pj_pool_t* pool = pjsua_pool_create("wavplay", 512, 512);
-		//if (!pool) {
-		//	data_.state = orig_state;
-		//	update_components_state_();
-		//	wxMessageBox("Failed to create pool", "Error");
-		//	return;
-		//}
-
-		//pjmedia_port* port = nullptr;
-		//pj_status_t status = pjmedia_wav_player_port_create(
-		//	pool,
-		//	data_.file_recording.c_str(), // your WAV file path
-		//	0,                             // no loop
-		//	0,                             // flags
-		//	0,                             // buffer
-		//	&port
-		//);
-
-		//if (status != PJ_SUCCESS) {
-		//	data_.state = orig_state;
-		//	update_components_state_();
-		//	wxMessageBox("Cannot initialize WAV player", "Error");
-		//	return;
-		//}
-
-		//pjsua_conf_port_id wav_port = PJSUA_INVALID_ID;
-		//status = pjsua_conf_add_port(pool, port, &wav_port);
-		//if (status != PJ_SUCCESS) {
-		//	pjmedia_port_destroy(port);
-		//	data_.state = orig_state;
-		//	update_components_state_();
-		//	wxMessageBox("Cannot add WAV port", "Error");
-		//	return;
-		//}
-
-		//// hook EOF callback
-		//bool finished = false;
-		//pjmedia_wav_player_set_eof_cb(port, &finished, &on_wav_eof);
-
-		//// Connect WAV to sound device (slot 0)
-		//pjsua_conf_connect(wav_port, 0);
-
-		//// Wait until EOF
-		//while (!finished) {
-		//	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		//}
-
-		//// Cleanup
-		//pjsua_conf_disconnect(wav_port, 0);
-		//pjsua_conf_remove_port(wav_port);
-		//pjmedia_port_destroy(port);
-
-		data_.state = orig_state;
-		update_components_state_();
-
-		wxMessageBox("Recording played successfully.", this->GetTitle());
 	}
 
 	void WDialer::on_cm_(wxCommandEvent&)

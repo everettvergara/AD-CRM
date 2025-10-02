@@ -32,6 +32,19 @@ namespace eg::ad3
 		}
 	}
 
+	bool ServicePJCalls::play_wav(const std::string& wav_filename)
+	{
+		std::lock_guard lock(call_mutex_);
+		if (not calls_.empty())
+		{
+			return false;
+		}
+
+		ServicePJWavPool::instance().play_wav(wav_filename);
+
+		return true;
+	}
+
 	int ServicePJCalls::make_call(std::function<void(pjsip_inv_state, pj::CallInfo info)> fn, const std::string& wav_filename, const std::string& mobile)
 	{
 		register_current_thread_in_pj("make_call");
