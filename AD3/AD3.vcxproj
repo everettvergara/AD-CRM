@@ -146,7 +146,9 @@
     <ClCompile Include="PJCall.cpp" />
     <ClCompile Include="PJHelper.cpp" />
     <ClCompile Include="ServicePJAccount.cpp" />
+    <ClCompile Include="ServicePJCalls.cpp" />
     <ClCompile Include="ServicePJEndpoint.cpp" />
+    <ClCompile Include="ServicePJWavPool.cpp" />
     <ClCompile Include="WAutoDial.cpp" />
     <ClCompile Include="WChildFrame.cpp" />
     <ClCompile Include="WDialer.cpp" />
@@ -160,7 +162,9 @@
     <ClInclude Include="PJHelper.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ServicePJAccount.h" />
+    <ClInclude Include="ServicePJCalls.h" />
     <ClInclude Include="ServicePJEndpoint.h" />
+    <ClInclude Include="ServicePJWavPool.h" />
     <ClInclude Include="WApp.h" />
     <ClInclude Include="WAppAD3.hpp" />
     <ClInclude Include="WAutoDial.h" />

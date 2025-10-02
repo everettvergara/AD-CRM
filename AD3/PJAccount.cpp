@@ -57,13 +57,13 @@ namespace eg::ad3
 	void PJAccount::onRegState(pj::OnRegStateParam& prm)
 	{
 		LOG_INSTANCE;
-		LOG_I("PJAccount::onRegState:  ({}) {}", static_cast<int>(prm.status), prm.reason);
+		//LOG_I("PJAccount::onRegState:  ({}) {}", static_cast<int>(prm.status), prm.reason);
 
 		is_registered = (prm.code == PJSIP_SC_OK);
 
 		if (is_registered)
 		{
-			LOG_I("account::onRegState: Account registration successful.");
+			//LOG_I("account::onRegState: Account registration successful.");
 			failed_registration_ctr_ = 0;
 			cv_.notify_one();
 		}
@@ -84,13 +84,13 @@ namespace eg::ad3
 
 	void PJAccount::onIncomingCall(pj::OnIncomingCallParam& prm)
 	{
-		LOG_INSTANCE;
-		LOG_I("PJAccount::onIncomingCall:");
+		//LOG_INSTANCE;
+		//LOG_I("PJAccount::onIncomingCall:");
 	}
 
 	void PJAccount::onIncomingSubscribe(pj::OnIncomingSubscribeParam&)
 	{
-		LOG_INSTANCE;
-		LOG_I("PJAccount::onIncomingSubscribe:");
+		//LOG_INSTANCE;
+		//LOG_I("PJAccount::onIncomingSubscribe:");
 	}
 }

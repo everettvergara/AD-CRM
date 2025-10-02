@@ -16,7 +16,7 @@ namespace eg::ad3
 	public:
 
 		PJAccount account;
-		std::mutex call_mutex;
+		//std::mutex call_mutex;
 
 		static void init();
 		static ServicePJAccount& instance();

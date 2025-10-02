@@ -32,32 +32,27 @@ namespace eg::ad3
 		std::optional<pj::AudioMedia> get_active_media(const pj::CallInfo&);
 
 	protected:
-
 		volatile pjsip_inv_state last_call_state;
-
-		void onCallState(pj::OnCallStateParam&) override;
-		void onCallMediaState(pj::OnCallMediaStateParam&) override;
-
-		virtual void on_user_call_state_changed();
-		virtual void on_call_state_disconnected();
-		virtual void on_call_media_state_on_confirmed(pj::AudioMedia&);
-
-		void play_local_ringback();
-		void stop_local_ringback();
-
-	private:
-
-		//PJSIP_INV_STATE_NULL,           /**< Before INVITE is sent or received  */
-		//PJSIP_INV_STATE_CALLING,        /**< After INVITE is sent               */
-		//PJSIP_INV_STATE_INCOMING,       /**< After INVITE is received.          */
-		//PJSIP_INV_STATE_EARLY,          /**< After response with To tag.        */
-		//PJSIP_INV_STATE_CONNECTING,     /**< After 2xx is sent/received.        */
-		//PJSIP_INV_STATE_CONFIRMED,      /**< After ACK is sent/received.        */
-		//PJSIP_INV_STATE_DISCONNECTED,   /**< Session is terminated.             */
 
 		std::thread timeout_thread_;
 		std::mutex mutex_;
 		std::condition_variable cv_;
-		pjsua_conf_port_id ring_tone_port_;
+
+		void onCallState(pj::OnCallStateParam&) override;
+		void onCallMediaState(pj::OnCallMediaStateParam&) override;
+
+		virtual void on_user_call_state_changed(const pj::CallInfo& info);
+		virtual void on_call_state_disconnected();
+		virtual void on_call_media_state_on_confirmed(pj::AudioMedia&);
+
+		//private:
+
+			//PJSIP_INV_STATE_NULL,           /**< Before INVITE is sent or received  */
+			//PJSIP_INV_STATE_CALLING,        /**< After INVITE is sent               */
+			//PJSIP_INV_STATE_INCOMING,       /**< After INVITE is received.          */
+			//PJSIP_INV_STATE_EARLY,          /**< After response with To tag.        */
+			//PJSIP_INV_STATE_CONNECTING,     /**< After 2xx is sent/received.        */
+			//PJSIP_INV_STATE_CONFIRMED,      /**< After ACK is sent/received.        */
+			//PJSIP_INV_STATE_DISCONNECTED,   /**< Session is terminated.             */
 	};
 }

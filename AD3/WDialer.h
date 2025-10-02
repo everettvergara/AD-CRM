@@ -26,6 +26,19 @@ namespace eg::ad3
 
 		WDialer(wxMDIParentFrame* parent, const char* title);
 
+		//void on_close(wxCloseEvent& event)
+		//{
+		//	if (current_call_ >= 0)
+		//	{
+		//		wxMessageBox("Call is ongoing. Cancel / Stop the call first.", this->GetTitle());
+		//		event.Veto();
+		//		return;
+		//	}
+
+		//	// normal close
+		//	Destroy();  // or event.Skip() if you want the default handler
+		//}
+
 	protected:
 
 		wxTreeCtrl* tree_;
@@ -56,8 +69,7 @@ namespace eg::ad3
 		wxButton* save_button_;
 		wxButton* cancel_button_;
 
-		std::shared_ptr<PJCallManualDial> current_call_;
-		//std::mutex call_mutex_;
+		int current_call_;
 
 		DialerFilter filter_;
 		DialerData data_;
@@ -80,7 +92,7 @@ namespace eg::ad3
 		void on_playback_(wxCommandEvent&);
 		void on_cm_(wxCommandEvent&);
 
-		void on_call_state_changed_(pjsip_inv_state state);
+		void on_call_state_changed_(pjsip_inv_state state, pj::CallInfo info);
 
 		void save_();
 		void update_components_state_();

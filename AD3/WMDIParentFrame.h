@@ -32,6 +32,7 @@ namespace eg::ad3
 
 		//	return client;
 		//}
+
 	protected:
 		std::unordered_map<const char*, wxWeakRef<wxMDIChildFrame>> child_ids;
 

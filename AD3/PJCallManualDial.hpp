@@ -2,9 +2,11 @@
 
 #include "PJCall.h"
 #include <filesystem>
+//#include <pjmedia/wav_port.h>
 #include "Common/Log.hpp"
 #include "ServicePJEndpoint.h"
-#include <pjmedia/wav_port.h>
+#include "ServicePJWavPool.h"
+#include "PJHelper.h"
 
 namespace eg::ad3
 {
@@ -12,7 +14,7 @@ namespace eg::ad3
 		public PJCall
 	{
 	public:
-		PJCallManualDial(PJAccount& account, std::function<void(pjsip_inv_state)> fn, const std::string& wav_filename) :
+		PJCallManualDial(PJAccount& account, std::function<void(pjsip_inv_state, pj::CallInfo info)> fn, const std::string& wav_filename) :
 			PJCall(account),
 			on_status_change_callback_(std::move(fn)),
 			wav_filename_(wav_filename),
@@ -29,15 +31,33 @@ namespace eg::ad3
 			}
 		}
 
+		~PJCallManualDial()
+		{
+			if (is_ringing)
+			{
+				ServicePJWavPool::instance().stop(this->getId());
+			}
+		}
+
+		void stop_ringing()
+		{
+			ServicePJWavPool::instance().stop(this->getId());
+			is_ringing = false;
+		}
+
 	protected:
 		bool is_ringing;
-		void on_user_call_state_changed() override
+		void on_user_call_state_changed(const pj::CallInfo& info) override
 		{
-			on_status_change_callback_(last_call_state);
+			//LOG_II("PJCallManualDial::on_user_call_state_changed: BEFORE");
+			on_status_change_callback_(last_call_state, info /* Copy */);
+			//LOG_II("PJCallManualDial::on_user_call_state_changed: AFTER");
 
-			if (last_call_state == PJSIP_INV_STATE_EARLY)
+			if (not is_ringing and last_call_state == PJSIP_INV_STATE_EARLY)
 			{
-				play_local_ringback();
+				//LOG_II("PJCallManualDial::on_user_call_state_changed: EARLY");
+				//play_local_ringback();
+				ServicePJWavPool::instance().play_local_ringback(this->getId());
 				is_ringing = true;
 			}
 			else if (is_ringing and (
@@ -46,39 +66,51 @@ namespace eg::ad3
 				last_call_state == PJSIP_INV_STATE_DISCONNECTED
 				))
 			{
-				stop_local_ringback();
-				is_ringing = false;
+				//LOG_II("PJCallManualDial::on_user_call_state_changed: CONNECTING/CONFIRMED/DISCONN");
+				stop_ringing();
 			}
+			//LOG_II("PJCallManualDial::on_user_call_state_changed: END");
 		}
 
 		void on_call_state_disconnected() override
 		{
+			//LOG_II("PJCallManualDial::on_user_call_state_changed: DISCONNECTED");
 		}
 
 		void on_call_media_state_on_confirmed(pj::AudioMedia& media) override
 		{
+			//LOG_II("PJCallManualDial::on_call_media_state_on_confirmed: {}", wav_filename_);
+
 			recorder_.createRecorder(wav_filename_);
 
 			// 1. Call audio -> Speaker (so YOU hear them)
+			//LOG_II("PJCallManualDial::on_call_media_state_on_confirmed: 2");
+
 			media.startTransmit(
 				pj::Endpoint::instance().audDevManager().getPlaybackDevMedia()
 			);
 
 			// 2. Mic -> Call audio (so THEY hear you)
+			//LOG_II("PJCallManualDial::on_call_media_state_on_confirmed: 3");
+
 			pj::Endpoint::instance().audDevManager()
 				.getCaptureDevMedia().startTransmit(media);
 
 			// 3. Optional: Call audio -> Recorder
+			//LOG_II("PJCallManualDial::on_call_media_state_on_confirmed: 4");
+
 			media.startTransmit(recorder_);
 
 			// 4. Optional: Mic -> Recorder (to capture your voice too)
+			//LOG_II("PJCallManualDial::on_call_media_state_on_confirmed: 5");
+
 			pj::Endpoint::instance().audDevManager()
 				.getCaptureDevMedia().startTransmit(recorder_);
 		}
 
 	private:
 		pj::AudioMediaRecorder recorder_;
-		std::function<void(pjsip_inv_state)> on_status_change_callback_;
+		std::function<void(pjsip_inv_state, pj::CallInfo) > on_status_change_callback_;
 		std::string wav_filename_;
 	};
 }

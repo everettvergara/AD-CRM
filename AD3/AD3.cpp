@@ -12,6 +12,8 @@
 #include "Common/ServiceCtrlC.h"
 #include "ServicePJEndpoint.h"
 #include "ServicePJAccount.h"
+#include "ServicePJCalls.h"
+#include "ServicePJWavPool.h"
 
 // UI/UX
 #include "WAppAD3.hpp"
@@ -36,6 +38,8 @@ int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow)
 		eg::sys::ServiceCtrlC::init();
 		eg::ad3::ServicePJEndpoint::init();
 		eg::ad3::ServicePJAccount::init();
+		eg::ad3::ServicePJCalls::init();
+		eg::ad3::ServicePJWavPool::init();
 
 		wxApp::SetInstance(new eg::ad3::WAppAD3);
 		if (not wxEntryStart(hInst))

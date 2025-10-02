@@ -12,7 +12,9 @@
 #include "Common/StringHelper.hpp"
 #include "Common/Run.hpp"
 #include "ServicePJAccount.h"
+#include "ServicePJCalls.h"
 #include "ConfigSettings.hpp"
+#include "ServicePJCalls.h"
 
 // TODO: to call count not reset when client, campaign, prio changed
 namespace eg::ad3
@@ -42,7 +44,8 @@ namespace eg::ad3
 		cancel_button_(nullptr),
 		playback_button_(nullptr),
 		cm_button_(nullptr),
-		data_()
+		data_(),
+		current_call_(-1)
 
 	{
 		on_init_filter_controls_();
@@ -394,6 +397,8 @@ namespace eg::ad3
 		save_button_->Bind(wxEVT_BUTTON, &WDialer::on_save_, this);
 		cancel_button_ = register_button("Cancel", wxID_ANY);
 		cancel_button_->Bind(wxEVT_BUTTON, &WDialer::on_close_, this);
+
+		//this->Bind(wxEVT_CLOSE_WINDOW, &WDialer::on_close_, this);
 	}
 
 	void WDialer::on_init_filter_controls_()
@@ -562,31 +567,42 @@ namespace eg::ad3
 		}
 	}
 
-	void WDialer::on_call_state_changed_(pjsip_inv_state state)
+	void WDialer::on_call_state_changed_(pjsip_inv_state state, pj::CallInfo info)
 	{
-		wxTheApp->CallAfter([this, state]
+		wxTheApp->CallAfter([this, state, info]
 			{
 				switch (state)
 				{
 				case PJSIP_INV_STATE_CALLING:
+					//LOG_II("Calling call to {}", data_.mobile);
+
 					data_.status = "PJSIP_INV_STATE_CALLING";
 					break;
 
 				case PJSIP_INV_STATE_INCOMING:
+					//LOG_II("Incoming call to {}", data_.mobile);
+
 					data_.status = "PJSIP_INV_STATE_INCOMING";
 					break;
 
 				case PJSIP_INV_STATE_EARLY:
+					LOG_II("PJSIP_INV_STATE_EARLY {}", current_call_);
+
 					data_.status = "PJSIP_INV_STATE_EARLY";
 					break;
 
 				case PJSIP_INV_STATE_CONNECTING:
+					//LOG_II("Connecting call to {}", data_.mobile);
+
 					data_.status = "PJSIP_INV_STATE_CONNECTING";
 					break;
 
 				case PJSIP_INV_STATE_CONFIRMED:
 				{
+					LOG_II("PJSIP_INV_STATE_CONFIRMED {}", current_call_);
+					//LOG_II("Confirmed call to {}", data_.mobile);
 					data_.status = "PJSIP_INV_STATE_CONFIRMED";
+					ServicePJCalls::instance().hangup_all_calls_except(current_call_);
 
 					if (data_.uploader_contact_id > 0)
 					{
@@ -605,7 +621,7 @@ namespace eg::ad3
 
 							if (not conn.connected())
 							{
-								wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
+								wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
 								return;
 							}
 
@@ -632,6 +648,10 @@ namespace eg::ad3
 				}
 				case PJSIP_INV_STATE_DISCONNECTED:
 				{
+					LOG_II("PJSIP_INV_STATE_DISCONNECTED {}", current_call_);
+					ServicePJCalls::instance().remove_call(current_call_);
+					current_call_ = -1;
+
 					if (data_.uploader_contact_id > 0)
 					{
 						if (data_.status not_eq "PJSIP_INV_STATE_CONFIRMED")
@@ -648,13 +668,28 @@ namespace eg::ad3
 
 							if (not conn.connected())
 							{
-								wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
+								wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
 								return;
 							}
 
 							nanodbc::statement stmt(conn);
 							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
-							const std::string remarks = std::format("{}", data_.status);
+
+							const auto remarks = [&info, this]
+								{
+									if (info.lastStatusCode == PJSIP_SC_BUSY_HERE or info.lastStatusCode == PJSIP_SC_BUSY_EVERYWHERE)
+									{
+										return std::format("Attempted to call {} but number is Busy.", data_.mobile);
+									}
+
+									else if (info.lastStatusCode == PJSIP_SC_REQUEST_TIMEOUT or info.lastStatusCode == PJSIP_SC_TEMPORARILY_UNAVAILABLE)
+									{
+										return std::format("Attempted to call {} but callee did not answer.", data_.mobile);
+									}
+
+									return std::format("Attempted to call {} but call did not connect.", data_.mobile);
+								}();
+
 							const size_t uploader_contact_id = 0;
 
 							stmt.bind(0, &data_.id);
@@ -682,13 +717,13 @@ namespace eg::ad3
 
 							if (not conn.connected())
 							{
-								wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
+								wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
 								return;
 							}
 
 							nanodbc::statement stmt(conn);
 							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
-							const std::string remarks = std::format("Conversation Time: {}s Playback: {}", static_cast<size_t>(time_elapsed), data_.file_recording);
+							const std::string remarks = std::format("Called {} Conversation Time: {}s Playback: {}", data_.mobile, static_cast<size_t>(time_elapsed), data_.file_recording);
 
 							const size_t uploader_contact_id = 0;
 							stmt.bind(0, &data_.id);
@@ -705,8 +740,9 @@ namespace eg::ad3
 					auto should_stop_auto = (data_.state == DialerState::Stopping);
 
 					{
-						std::lock_guard lock(ServicePJAccount::instance().call_mutex);;
-						current_call_.reset();
+						//std::lock_guard lock(ServicePJAccount::instance().call_mutex);;
+						//current_call_.reset();
+						current_call_ = -1;
 						data_.time_call_ended = eg::string::datetime_to_formatted_string();
 						data_.state = DialerState::JustEnded;
 						time_call_ended_->SetValue(data_.time_call_ended);
@@ -720,7 +756,7 @@ namespace eg::ad3
 					if (not filter_.is_auto)
 					{
 						update_components_state_();
-						wxMessageBox("Call ended", "Info", wxOK | wxICON_INFORMATION);
+						wxMessageBox("Call ended", this->GetTitle(), wxOK | wxICON_INFORMATION);
 					}
 					else
 					{
@@ -773,7 +809,7 @@ namespace eg::ad3
 	{
 		if (filter_.selected_status->to_call_count() == 0)
 		{
-			wxMessageBox("No more records to call for this option.", "Info", wxOK | wxICON_INFORMATION, this);
+			wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			return;
 		}
 
@@ -789,7 +825,7 @@ namespace eg::ad3
 
 		if (not conn.connected())
 		{
-			wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
+			wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
 			return;
 		}
 
@@ -811,7 +847,7 @@ namespace eg::ad3
 
 					filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
 
-					wxMessageBox("No more records to call for this option.", "Info", wxOK | wxICON_INFORMATION, this);
+					wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 					update_components_from_data_();
 
 					return;
@@ -848,7 +884,7 @@ namespace eg::ad3
 				result.affected_rows() == 0)
 			{
 				conn.disconnect();
-				wxMessageBox("Could not update the next_id", "Database Error", wxOK | wxICON_ERROR, this);
+				wxMessageBox("Could not update the next_id", this->GetTitle(), wxOK | wxICON_ERROR, this);
 				return;
 			}
 
@@ -857,7 +893,7 @@ namespace eg::ad3
 		}
 		else
 		{
-			wxMessageBox("No record retrieved.", "Database Error", wxOK | wxICON_ERROR, this);
+			wxMessageBox("No record retrieved.", this->GetTitle(), wxOK | wxICON_ERROR, this);
 			return;
 		}
 
@@ -870,14 +906,14 @@ namespace eg::ad3
 	{
 		if (auto err = update_data_from_components_(); err not_eq nullptr)
 		{
-			wxMessageBox(err, "Validation", wxOK | wxICON_INFORMATION, this);
+			wxMessageBox(err, this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			return;
 		}
 
 		const auto validated_name = DialerData::trimmed_name(data_.name);
 		if (validated_name.empty())
 		{
-			wxMessageBox("Invalid name.", "Validation", wxOK | wxICON_INFORMATION, this);
+			wxMessageBox("Invalid name.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			return;
 		}
 
@@ -890,21 +926,34 @@ namespace eg::ad3
 	void WDialer::call_proper_(const std::string& validated_name)
 	{
 		{
+			if (current_call_ >= 0)
+			{
+				wxMessageBox("There is already an ongoing call.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+				return;
+			}
+
+			auto& calls = ServicePJCalls::instance();
 			data_.file_recording = generate_wav_filename(data_.mobile, validated_name);
-			std::lock_guard lock(ServicePJAccount::instance().call_mutex);
 
-			current_call_ = std::make_shared<PJCallManualDial>(
-				ServicePJAccount::instance().account,
-				std::bind(&WDialer::on_call_state_changed_, this, std::placeholders::_1),
-				data_.file_recording);
+			current_call_ = calls.make_call(
+				std::bind(&WDialer::on_call_state_changed_, this, std::placeholders::_1, std::placeholders::_2),
+				data_.file_recording,
+				data_.mobile);
 
-			current_call_->makeCall(std::format("sip:{}@{}", data_.mobile, ConfigSettings::instance().server_ip), []
-				{
-					pj::CallOpParam p(true);
-					p.opt.audioCount = 1;
-					p.opt.videoCount = 0;
-					return p;
-				}());
+			//std::lock_guard lock(ServicePJAccount::instance().call_mutex);
+
+			//current_call_ = std::make_shared<PJCallManualDial>(
+			//	ServicePJAccount::instance().account,
+			//	std::bind(&WDialer::on_call_state_changed_, this, std::placeholders::_1, std::placeholders::_2),
+			//	data_.file_recording);
+
+			//current_call_->makeCall(std::format("sip:{}@{}", data_.mobile, ConfigSettings::instance().server_ip), []
+			//	{
+			//		pj::CallOpParam p(true);
+			//		p.opt.audioCount = 1;
+			//		p.opt.videoCount = 0;
+			//		return p;
+			//	}());
 		}
 
 		data_.time_of_call = eg::string::datetime_to_formatted_string();
@@ -918,7 +967,7 @@ namespace eg::ad3
 	{
 		if (data_.state == DialerState::JustEnded)
 		{
-			if (wxMessageBox("Save this record before proceeding with the call?", "Confirmation", wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
+			if (wxMessageBox("Save this record before proceeding with the call?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
 			{
 				save_();
 			}
@@ -948,8 +997,11 @@ namespace eg::ad3
 	void WDialer::on_stop_(wxCommandEvent&)
 	{
 		{
-			std::lock_guard lock(ServicePJAccount::instance().call_mutex);
-			current_call_->hangup_call();
+			//std::lock_guard lock(ServicePJAccount::instance().call_mutex);
+			//current_call_->hangup_call();
+			ServicePJCalls::instance().hangup_and_remove_call(current_call_);
+			//current_call_ = -1;
+			//current_call_.reset();
 		}
 
 		data_.state = DialerState::Stopping;
@@ -988,13 +1040,13 @@ namespace eg::ad3
 
 		if (const auto err = update_data_from_components_(); err not_eq nullptr)
 		{
-			wxMessageBox(err, "Validation", wxOK | wxICON_INFORMATION, this);
+			wxMessageBox(err, this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			return;
 		}
 
 		if (data_.time_call_ended.empty())
 		{
-			wxMessageBox("Cannot save a record that has not been called.", "Validation", wxOK | wxICON_INFORMATION, this);
+			wxMessageBox("Cannot save a record that has not been called.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			return;
 		}
 
@@ -1002,7 +1054,7 @@ namespace eg::ad3
 
 		update_components_state_();
 
-		wxMessageBox("Call record saved", "Info", wxOK | wxICON_INFORMATION, this);
+		wxMessageBox("Call record saved", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 	}
 
 	void WDialer::save_()
@@ -1013,7 +1065,7 @@ namespace eg::ad3
 		{
 			if (not std::filesystem::create_directories(path))
 			{
-				wxMessageBox("Could not create the directory to save the file.", "Info", wxOK | wxICON_INFORMATION, this);
+				wxMessageBox("Could not create the directory to save the file.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 				return;
 			}
 		}
@@ -1112,9 +1164,15 @@ namespace eg::ad3
 
 	void WDialer::on_close_(wxCommandEvent&)
 	{
+		if (current_call_ >= 0)
+		{
+			wxMessageBox("There's an ongoing call. Stop / End the call first.", this->GetTitle());
+			return;
+		}
+
 		if (data_.state == DialerState::JustEnded)
 		{
-			if (wxMessageBox("Do you want to save record before closing the window?", "Confirmation", wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
+			if (wxMessageBox("Do you want to save record before closing the window?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
 			{
 				save_();
 			}
@@ -1123,59 +1181,83 @@ namespace eg::ad3
 		Close(true);
 	}
 
+	static pj_status_t on_wav_eof(pjmedia_port* /*port*/, void* user_data)
+	{
+		auto finished = static_cast<bool*>(user_data);
+		*finished = true;
+		return PJ_SUCCESS; // you MUST return pj_status_t
+	}
 	void WDialer::on_playback_(wxCommandEvent&)
 	{
-		//wxMessageBox("Test", "Error");
 		auto orig_state = data_.state;
 		data_.state = DialerState::PlayingWav;
-		wxTheApp->CallAfter([this]
-			{
-				update_components_state_();
+		wxTheApp->CallAfter([this] {
+			update_components_state_();
 			});
 
-		ma_engine engine;
-		if (ma_engine_init(NULL, &engine) not_eq MA_SUCCESS)
-		{
-			data_.state = orig_state;
-			update_components_state_();
+		//pj_pool_t* pool = pjsua_pool_create("wavplay", 512, 512);
+		//if (!pool) {
+		//	data_.state = orig_state;
+		//	update_components_state_();
+		//	wxMessageBox("Failed to create pool", "Error");
+		//	return;
+		//}
 
-			wxMessageBox("Cannot initialize MA engine", "Error");
-			return;
-		}
+		//pjmedia_port* port = nullptr;
+		//pj_status_t status = pjmedia_wav_player_port_create(
+		//	pool,
+		//	data_.file_recording.c_str(), // your WAV file path
+		//	0,                             // no loop
+		//	0,                             // flags
+		//	0,                             // buffer
+		//	&port
+		//);
 
-		ma_sound sound;
-		if (ma_sound_init_from_file(&engine, data_.file_recording.c_str(),
-			MA_SOUND_FLAG_DECODE,
-			NULL, NULL, &sound) not_eq MA_SUCCESS)
-		{
-			ma_engine_uninit(&engine);
-			data_.state = orig_state;
-			update_components_state_();
-			wxMessageBox("Cannot initialize MA sounds", "Error");
-			return;
-		}
+		//if (status != PJ_SUCCESS) {
+		//	data_.state = orig_state;
+		//	update_components_state_();
+		//	wxMessageBox("Cannot initialize WAV player", "Error");
+		//	return;
+		//}
 
-		ma_sound_start(&sound);
+		//pjsua_conf_port_id wav_port = PJSUA_INVALID_ID;
+		//status = pjsua_conf_add_port(pool, port, &wav_port);
+		//if (status != PJ_SUCCESS) {
+		//	pjmedia_port_destroy(port);
+		//	data_.state = orig_state;
+		//	update_components_state_();
+		//	wxMessageBox("Cannot add WAV port", "Error");
+		//	return;
+		//}
 
-		while (ma_sound_is_playing(&sound))
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		}
+		//// hook EOF callback
+		//bool finished = false;
+		//pjmedia_wav_player_set_eof_cb(port, &finished, &on_wav_eof);
 
-		ma_sound_uninit(&sound);
-		ma_engine_uninit(&engine);
+		//// Connect WAV to sound device (slot 0)
+		//pjsua_conf_connect(wav_port, 0);
+
+		//// Wait until EOF
+		//while (!finished) {
+		//	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//}
+
+		//// Cleanup
+		//pjsua_conf_disconnect(wav_port, 0);
+		//pjsua_conf_remove_port(wav_port);
+		//pjmedia_port_destroy(port);
 
 		data_.state = orig_state;
 		update_components_state_();
 
-		wxMessageBox("Recording played successfully.", "Information");
+		wxMessageBox("Recording played successfully.", this->GetTitle());
 	}
 
 	void WDialer::on_cm_(wxCommandEvent&)
 	{
 		if (data_.id == 0 or data_.collector_id == 0)
 		{
-			wxMessageBox("No CM associated with this call", "Information", wxOK | wxICON_INFORMATION, this);
+			wxMessageBox("No CM associated with this call", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			return;
 		}
 
@@ -1201,7 +1283,7 @@ namespace eg::ad3
 
 			if (not conn.connected())
 			{
-				wxMessageBox(std::format("Could not connect to database: {}", db_conn), "Database Connection", wxOK | wxICON_ERROR, this);
+				wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
 				Close(true);
 				return;
 			}
