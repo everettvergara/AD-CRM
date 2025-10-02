@@ -53,6 +53,7 @@ namespace eg::ad3
 		on_init_tree_();
 		on_init_buttons_();
 		update_components_state_();
+		this->Bind(wxEVT_CLOSE_WINDOW, &WDialer::on_win_close_, this);
 
 		Show(true);
 	}
@@ -397,8 +398,6 @@ namespace eg::ad3
 		save_button_->Bind(wxEVT_BUTTON, &WDialer::on_save_, this);
 		cancel_button_ = register_button("Cancel", wxID_ANY);
 		cancel_button_->Bind(wxEVT_BUTTON, &WDialer::on_close_, this);
-
-		//this->Bind(wxEVT_CLOSE_WINDOW, &WDialer::on_close_, this);
 	}
 
 	void WDialer::on_init_filter_controls_()
@@ -1160,6 +1159,26 @@ namespace eg::ad3
 		tree_->Expand(fmm);
 		tree_->Expand(fdd);
 		tree_->Expand(ucode);
+	}
+
+	void WDialer::on_win_close_(wxCloseEvent& event)
+	{
+		if (current_call_ >= 0)
+		{
+			wxMessageBox("There's an ongoing call. Stop / End the call first.", this->GetTitle());
+			event.Veto();
+			return;
+		}
+
+		if (data_.state == DialerState::JustEnded)
+		{
+			if (wxMessageBox("Do you want to save record before closing the window?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
+			{
+				save_();
+			}
+		}
+
+		Destroy();
 	}
 
 	void WDialer::on_close_(wxCommandEvent&)

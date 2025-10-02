@@ -89,6 +89,7 @@ namespace eg::ad3
 		void on_stop_(wxCommandEvent&);
 		void on_save_(wxCommandEvent&);
 		void on_close_(wxCommandEvent&);
+		void on_win_close_(wxCloseEvent& event);
 		void on_playback_(wxCommandEvent&);
 		void on_cm_(wxCommandEvent&);
 
