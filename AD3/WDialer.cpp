@@ -459,6 +459,9 @@ namespace eg::ad3
 				}
 
 				data_.clear();
+				filter_to_call_count_->SetValue("0");
+				data_.ucode = "";
+				ucode_->SetValue("");
 				//update_components_from_data_();
 			});
 
@@ -486,6 +489,9 @@ namespace eg::ad3
 				}
 
 				data_.clear();
+				filter_to_call_count_->SetValue("0");
+				data_.ucode = "";
+				ucode_->SetValue("");
 				//update_components_from_data_();
 			});
 
@@ -510,6 +516,9 @@ namespace eg::ad3
 				}
 
 				data_.clear();
+				filter_to_call_count_->SetValue("0");
+				data_.ucode = "";
+				ucode_->SetValue("");
 				//update_components_from_data_();
 			});
 
