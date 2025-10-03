@@ -228,7 +228,7 @@ namespace eg::ad3
 				filter_status_->Enable();
 				remarks_->Disable();
 				new_button_->Disable();
-				call_again_button_->Enable();
+				call_again_button_->Disable();
 			}
 
 			id_->Disable();
@@ -325,7 +325,7 @@ namespace eg::ad3
 			{
 				new_button_->Disable();
 				call_button_->Enable();
-				call_again_button_->Enable();
+				call_again_button_->Disable();
 			}
 
 			stop_button_->Disable();
@@ -459,9 +459,14 @@ namespace eg::ad3
 				}
 
 				data_.clear();
-				filter_to_call_count_->SetValue("0");
+				filter_to_call_count_->ChangeValue("0");
 				data_.ucode = "";
-				ucode_->SetValue("");
+				ucode_->ChangeValue("");
+				wxTheApp->CallAfter([this]
+					{
+						panel->Layout();
+						panel->Refresh();
+					});
 				//update_components_from_data_();
 			});
 
@@ -489,9 +494,14 @@ namespace eg::ad3
 				}
 
 				data_.clear();
-				filter_to_call_count_->SetValue("0");
+				filter_to_call_count_->ChangeValue("0");
 				data_.ucode = "";
-				ucode_->SetValue("");
+				ucode_->ChangeValue("");
+				wxTheApp->CallAfter([this]
+					{
+						panel->Layout();
+						panel->Refresh();
+					});
 				//update_components_from_data_();
 			});
 
@@ -516,9 +526,14 @@ namespace eg::ad3
 				}
 
 				data_.clear();
-				filter_to_call_count_->SetValue("0");
+				filter_to_call_count_->ChangeValue("0");
 				data_.ucode = "";
-				ucode_->SetValue("");
+				ucode_->ChangeValue("");
+				wxTheApp->CallAfter([this]
+					{
+						panel->Layout();
+						panel->Refresh();
+					});
 				//update_components_from_data_();
 			});
 
@@ -949,20 +964,12 @@ namespace eg::ad3
 				data_.file_recording,
 				data_.mobile);
 
-			//std::lock_guard lock(ServicePJAccount::instance().call_mutex);
-
-			//current_call_ = std::make_shared<PJCallManualDial>(
-			//	ServicePJAccount::instance().account,
-			//	std::bind(&WDialer::on_call_state_changed_, this, std::placeholders::_1, std::placeholders::_2),
-			//	data_.file_recording);
-
-			//current_call_->makeCall(std::format("sip:{}@{}", data_.mobile, ConfigSettings::instance().server_ip), []
-			//	{
-			//		pj::CallOpParam p(true);
-			//		p.opt.audioCount = 1;
-			//		p.opt.videoCount = 0;
-			//		return p;
-			//	}());
+			if (current_call_ < 0)
+			{
+				wxMessageBox("Could not make the call until active call is stopped.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+				current_call_ = -1;
+				return;
+			}
 		}
 
 		data_.time_of_call = eg::string::datetime_to_formatted_string();

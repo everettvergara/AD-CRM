@@ -51,6 +51,11 @@ namespace eg::ad3
 
 		std::lock_guard lock(call_mutex_);
 
+		if (active_call_id_.has_value())
+		{
+			return -1;
+		}
+
 		auto current_call = std::make_shared<PJCallManualDial>(
 			ServicePJAccount::instance().account,
 			std::move(fn),
@@ -111,6 +116,8 @@ namespace eg::ad3
 				++it;
 			}
 		}
+
+		active_call_id_ = except_call;
 	}
 
 	void ServicePJCalls::hangup_all_calls()
@@ -129,6 +136,7 @@ namespace eg::ad3
 			call->wait_until_state_is_disconnected();
 		}
 		calls_.clear();
+		active_call_id_.reset();
 	}
 
 	void ServicePJCalls::hangup_and_remove_call(int call_id)
@@ -145,6 +153,10 @@ namespace eg::ad3
 		call->hangup_call(true);
 		call->wait_until_state_is_disconnected();
 		calls_.erase(call_id);
+		if (active_call_id_.has_value() and active_call_id_.value() == call_id)
+		{
+			active_call_id_.reset();
+		}
 	}
 
 	void ServicePJCalls::remove_call(int call_id)
@@ -157,5 +169,9 @@ namespace eg::ad3
 		}
 
 		calls_.erase(call_id);
+		if (active_call_id_.has_value() and active_call_id_.value() == call_id)
+		{
+			active_call_id_.reset();
+		}
 	}
 }

@@ -16,7 +16,7 @@ namespace eg::ad3
 	public:
 
 		std::unordered_map<int, std::shared_ptr<PJCallManualDial>> calls_;
-		//std::optional<bool> playing_wav_;
+		std::optional<int> active_call_id_;
 
 		static void init();
 		static ServicePJCalls& instance();
