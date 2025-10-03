@@ -228,7 +228,7 @@ namespace eg::ad3
 				filter_status_->Enable();
 				remarks_->Disable();
 				new_button_->Disable();
-				call_again_button_->Disable();
+				call_again_button_->Enable();
 			}
 
 			id_->Disable();
@@ -325,7 +325,7 @@ namespace eg::ad3
 			{
 				new_button_->Disable();
 				call_button_->Enable();
-				call_again_button_->Disable();
+				call_again_button_->Enable();
 			}
 
 			stop_button_->Disable();

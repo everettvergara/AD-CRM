@@ -58,9 +58,9 @@ namespace eg::ad3
 			});
 	}
 
-	void PJCall::hangup_call()
+	void PJCall::hangup_call(bool request)
 	{
-		hangup_requested = true;
+		hangup_requested = request;
 		{
 			std::lock_guard lock(mutex_);
 			if (last_call_state == PJSIP_INV_STATE_DISCONNECTED)

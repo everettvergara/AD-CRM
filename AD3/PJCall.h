@@ -27,7 +27,7 @@ namespace eg::ad3
 		virtual ~PJCall();
 
 		void wait_until_state_is_disconnected();
-		void hangup_call();
+		void hangup_call(bool request = false);
 
 		std::optional<pj::AudioMedia> get_active_media(const pj::CallInfo&);
 

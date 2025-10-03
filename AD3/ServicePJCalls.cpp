@@ -45,7 +45,7 @@ namespace eg::ad3
 		return true;
 	}
 
-	int ServicePJCalls::make_call(std::function<void(pjsip_inv_state, pj::CallInfo info)> fn, const std::string& wav_filename, const std::string& mobile)
+	int ServicePJCalls::make_call(std::function<void(pjsip_inv_state, pj::CallInfo info, bool)> fn, const std::string& wav_filename, const std::string& mobile)
 	{
 		register_current_thread_in_pj("make_call");
 
@@ -87,7 +87,7 @@ namespace eg::ad3
 		{
 			if (id not_eq except_call)
 			{
-				call->hangup_call();
+				call->hangup_call(true);
 			}
 		}
 
@@ -122,7 +122,7 @@ namespace eg::ad3
 		for (const auto& [_, call] : calls_)
 		{
 			call->stop_ringing();
-			call->hangup_call();
+			call->hangup_call(true);
 		}
 		for (const auto& [_, call] : calls_)
 		{
@@ -142,7 +142,7 @@ namespace eg::ad3
 
 		auto& call = calls_.at(call_id);
 		call->stop_ringing();
-		call->hangup_call();
+		call->hangup_call(true);
 		call->wait_until_state_is_disconnected();
 		calls_.erase(call_id);
 	}
