@@ -842,7 +842,7 @@ namespace eg::ad3
 			if (results.next())
 			{
 				auto next_id = results.get<int>(0);
-				if (next_id == -1 or next_id >= filter_.selected_status->max_id)
+				if (next_id == -1 or next_id > filter_.selected_status->max_id)
 				{
 					filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
 
