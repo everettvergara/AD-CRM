@@ -93,7 +93,7 @@ namespace eg::ad3
 		void on_playback_(wxCommandEvent&);
 		void on_cm_(wxCommandEvent&);
 
-		void on_call_state_changed_(pjsip_inv_state state, pj::CallInfo info);
+		void on_call_state_changed_(pjsip_inv_state state, pj::CallInfo info, bool hangup_requested);
 
 		void save_();
 		void update_components_state_();

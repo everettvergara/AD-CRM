@@ -33,6 +33,7 @@ namespace eg::ad3
 
 	protected:
 		volatile pjsip_inv_state last_call_state;
+		bool hangup_requested;
 
 		std::thread timeout_thread_;
 		std::mutex mutex_;

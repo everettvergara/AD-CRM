@@ -14,7 +14,7 @@ namespace eg::ad3
 		public PJCall
 	{
 	public:
-		PJCallManualDial(PJAccount& account, std::function<void(pjsip_inv_state, pj::CallInfo info)> fn, const std::string& wav_filename) :
+		PJCallManualDial(PJAccount& account, std::function<void(pjsip_inv_state, pj::CallInfo info, bool)> fn, const std::string& wav_filename) :
 			PJCall(account),
 			on_status_change_callback_(std::move(fn)),
 			wav_filename_(wav_filename),
@@ -50,7 +50,7 @@ namespace eg::ad3
 		void on_user_call_state_changed(const pj::CallInfo& info) override
 		{
 			//LOG_II("PJCallManualDial::on_user_call_state_changed: BEFORE");
-			on_status_change_callback_(last_call_state, info /* Copy */);
+			on_status_change_callback_(last_call_state, info /* Copy */, this->hangup_requested);
 			//LOG_II("PJCallManualDial::on_user_call_state_changed: AFTER");
 
 			if (not is_ringing and last_call_state == PJSIP_INV_STATE_EARLY)
@@ -110,7 +110,7 @@ namespace eg::ad3
 
 	private:
 		pj::AudioMediaRecorder recorder_;
-		std::function<void(pjsip_inv_state, pj::CallInfo) > on_status_change_callback_;
+		std::function<void(pjsip_inv_state, pj::CallInfo, bool) > on_status_change_callback_;
 		std::string wav_filename_;
 	};
 }

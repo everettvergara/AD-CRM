@@ -10,7 +10,8 @@ namespace eg::ad3
 {
 	PJCall::PJCall(PJAccount& account) :
 		pj::Call(*dynamic_cast<pj::Account*>(&account)),
-		last_call_state(PJSIP_INV_STATE_NULL)
+		last_call_state(PJSIP_INV_STATE_NULL),
+		hangup_requested(false)
 	{
 		timeout_thread_ = std::thread([this]
 			{
@@ -59,6 +60,7 @@ namespace eg::ad3
 
 	void PJCall::hangup_call()
 	{
+		hangup_requested = true;
 		{
 			std::lock_guard lock(mutex_);
 			if (last_call_state == PJSIP_INV_STATE_DISCONNECTED)

@@ -17,6 +17,7 @@
 #include "ServicePJCalls.h"
 
 // TODO: to call count not reset when client, campaign, prio changed
+// todo: - should not be able to make another call if there's an ongoing call
 namespace eg::ad3
 {
 	WDialer::WDialer(wxMDIParentFrame* parent, const char* title) :
@@ -567,9 +568,9 @@ namespace eg::ad3
 		}
 	}
 
-	void WDialer::on_call_state_changed_(pjsip_inv_state state, pj::CallInfo info)
+	void WDialer::on_call_state_changed_(pjsip_inv_state state, pj::CallInfo info, bool hangup_requested)
 	{
-		wxTheApp->CallAfter([this, state, info]
+		wxTheApp->CallAfter([this, state, info, hangup_requested]
 			{
 				switch (state)
 				{
@@ -737,7 +738,7 @@ namespace eg::ad3
 						}
 					}
 
-					auto should_stop_auto = (data_.state == DialerState::Stopping);
+					auto should_stop_auto = (data_.state == DialerState::Stopping or hangup_requested);
 
 					{
 						//std::lock_guard lock(ServicePJAccount::instance().call_mutex);;
@@ -853,7 +854,7 @@ namespace eg::ad3
 				}
 				else
 				{
-					filter_.selected_status->next_id = next_id;
+					filter_.selected_status->next_id = next_id + 1;
 				}
 			}
 		}
@@ -874,7 +875,7 @@ namespace eg::ad3
 			data_.collector_id = filter_.selected_status->collector_id; // results.get<size_t>(4);
 			data_.uploader_contact_id = results.get<size_t>(5);
 			data_.ucode = filter_.selected_status->ucode;
-			auto next_id = filter_.selected_status->next_id;
+			//auto next_id = filter_.selected_status->next_id;
 
 			/*nanodbc::statement stmt(conn);
 			auto update_sql = std::format("UPDATE tb_ad_cache_priority_series SET next_id = {} WHERE {} between min_id and max_id", next_id + 1, next_id);
@@ -887,7 +888,7 @@ namespace eg::ad3
 				return;
 			}*/
 
-			filter_.selected_status->next_id = next_id + 1;
+			//filter_.selected_status->next_id = next_id + 1;
 			update_components_from_data_();
 		}
 		else
@@ -935,7 +936,7 @@ namespace eg::ad3
 			data_.file_recording = generate_wav_filename(data_.mobile, validated_name);
 
 			current_call_ = calls.make_call(
-				std::bind(&WDialer::on_call_state_changed_, this, std::placeholders::_1, std::placeholders::_2),
+				std::bind(&WDialer::on_call_state_changed_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
 				data_.file_recording,
 				data_.mobile);
 
