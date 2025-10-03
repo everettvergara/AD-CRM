@@ -53,6 +53,7 @@ namespace eg::ad3
 		std::string ucode;
 		int common_pool;
 		size_t cache_id;
+		size_t collector_id;
 
 		size_t to_call_count() const
 		{

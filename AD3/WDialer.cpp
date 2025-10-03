@@ -503,7 +503,7 @@ namespace eg::ad3
 				filter_status_->Clear();
 				filter_.selected_status = nullptr;
 
-				for (const auto& [status_id, _, __, ___, ____, _____, ______] : fprio->status_series)
+				for (const auto& [status_id, _, __, ___, ____, _____, ______, _______] : fprio->status_series)
 				{
 					filter_status_->Append(filter_.status_master.at(status_id), reinterpret_cast<void*>(status_id));
 				}
@@ -528,6 +528,7 @@ namespace eg::ad3
 
 				data_.clear();
 				data_.ucode = filter_.selected_status->ucode;
+				data_.collector_id = filter_.selected_status->collector_id;
 				update_components_from_data_();
 			});
 
@@ -626,7 +627,7 @@ namespace eg::ad3
 
 							nanodbc::statement stmt(conn);
 							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
-							const std::string remarks = std::format("{}", data_.status);
+							const std::string remarks = std::format("AUTO DIALER: {} {}", data_.status, data_.mobile);
 							stmt.bind(0, &data_.id);
 							stmt.bind(1, &data_.collector_id);
 							stmt.bind(2, remarks.c_str(), remarks.size());
@@ -678,15 +679,15 @@ namespace eg::ad3
 								{
 									if (info.lastStatusCode == PJSIP_SC_BUSY_HERE or info.lastStatusCode == PJSIP_SC_BUSY_EVERYWHERE)
 									{
-										return std::format("Attempted to call {} but number is Busy.", data_.mobile);
+										return std::format("AUTO DIALER: Attempted to call {} but number is Busy.", data_.mobile);
 									}
 
 									else if (info.lastStatusCode == PJSIP_SC_REQUEST_TIMEOUT or info.lastStatusCode == PJSIP_SC_TEMPORARILY_UNAVAILABLE)
 									{
-										return std::format("Attempted to call {} but callee did not answer.", data_.mobile);
+										return std::format("AUTO DIALER: Attempted to call {} but callee did not answer.", data_.mobile);
 									}
 
-									return std::format("Attempted to call {} but call did not connect.", data_.mobile);
+									return std::format("AUTO DIALER: Attempted to call {} but call did not connect.", data_.mobile);
 								}();
 
 							const size_t uploader_contact_id = 0;
@@ -828,22 +829,21 @@ namespace eg::ad3
 			return;
 		}
 
-		// Get the updated common pool since
-		// multiple agents could be calling the same pool
-		if (filter_.selected_status->common_pool)
-		{
-			const auto next_sql = std::format("exec sp_ad_tr_get_next_id {}", filter_.selected_status->next_id);
+		// Get the next ID from DB instead of cache since multiple windows or a different PC can be used to call
+		// the same CM
 
-			nanodbc::result results = nanodbc::execute(
-				conn,
-				NANODBC_TEXT(next_sql));
+		{
+			nanodbc::statement stmt(conn);
+			prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_get_next_id(?)}"));
+			stmt.bind(0, &filter_.selected_status->cache_id);
+
+			nanodbc::result results = nanodbc::execute(stmt);
+
 			if (results.next())
 			{
 				auto next_id = results.get<int>(0);
 				if (next_id == -1 or next_id >= filter_.selected_status->max_id)
 				{
-					conn.disconnect();
-
 					filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
 
 					wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
@@ -871,21 +871,21 @@ namespace eg::ad3
 			data_.name = results.get<std::string>(1);
 			data_.mobile = results.get<std::string>(2);
 			data_.remarks = results.get<std::string>(3);
-			data_.collector_id = results.get<size_t>(4);
+			data_.collector_id = filter_.selected_status->collector_id; // results.get<size_t>(4);
 			data_.uploader_contact_id = results.get<size_t>(5);
 			data_.ucode = filter_.selected_status->ucode;
 			auto next_id = filter_.selected_status->next_id;
-			nanodbc::statement stmt(conn);
+
+			/*nanodbc::statement stmt(conn);
 			auto update_sql = std::format("UPDATE tb_ad_cache_priority_series SET next_id = {} WHERE {} between min_id and max_id", next_id + 1, next_id);
 			prepare(stmt, NANODBC_TEXT(update_sql));
 
 			if (auto result = execute(stmt);
 				result.affected_rows() == 0)
 			{
-				conn.disconnect();
 				wxMessageBox("Could not update the next_id", this->GetTitle(), wxOK | wxICON_ERROR, this);
 				return;
-			}
+			}*/
 
 			filter_.selected_status->next_id = next_id + 1;
 			update_components_from_data_();
@@ -1346,7 +1346,9 @@ namespace eg::ad3
 					results.get<size_t>(12),
 					results.get<std::string>(13),
 					results.get<int>(14),
-					results.get<int>(15));
+					results.get<int>(15),
+					results.get<size_t>(0)
+				);
 			}
 
 			//LOG_II("End");
