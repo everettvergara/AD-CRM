@@ -2,8 +2,9 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include <vector>
 #include <mutex>
+#include <memory>
 #include <pjsua2.hpp>
 #include "PJAccount.h"
 #include "Common/NoCopyMove.hpp"
@@ -15,7 +16,8 @@ namespace eg::ad3
 	{
 	public:
 
-		PJAccount account;
+		std::vector<std::unique_ptr<PJAccount>> accounts;
+
 		//std::mutex call_mutex;
 
 		static void init();
@@ -24,7 +26,7 @@ namespace eg::ad3
 
 	private:
 
-		ServicePJAccount() = default;
+		ServicePJAccount();
 
 		inline static std::unique_ptr<ServicePJAccount> instance_;
 	};

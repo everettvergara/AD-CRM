@@ -7,23 +7,24 @@
 
 namespace eg::ad3
 {
-	PJAccount::PJAccount() :
+	PJAccount::PJAccount(const std::string& sip_id, const std::string& password) :
 		is_registered(false),
 		failed_registration_ctr_(0)
 	{
 		LOG_INSTANCE;
 
 		LOG_I("PJAccount::PJAccount: Creating PJ Account");
-		this->create([this]
+		this->create([this, &sip_id, &password]
 			{
 				pj::AccountConfig account_config{};
 				const auto& settings = ConfigSettings::instance();
 
-				account_config.idUri = std::format(k_pj_sip_user_server_format, settings.sip_id, settings.server_ip);
+				account_config.idUri = std::format(k_pj_sip_user_server_format, sip_id, settings.server_ip);
+				account_config.sipConfig.authCreds.emplace_back("digest", "*", sip_id, 0, password);
+
 				account_config.regConfig.timeoutSec = settings.server_timeout_secs;
 				account_config.regConfig.registrarUri = std::format(k_pj_sip_server_port_no_format, settings.server_ip, settings.server_port);
 				account_config.regConfig.registerOnAdd = settings.register_on_add;
-				account_config.sipConfig.authCreds.emplace_back("digest", "*", settings.sip_id, 0, settings.sip_password);
 				account_config.natConfig.udpKaIntervalSec = settings.server_keep_alive_secs;
 				account_config.natConfig.udpKaData = settings.server_keep_alive_data;
 

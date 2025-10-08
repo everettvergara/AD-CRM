@@ -16,7 +16,7 @@ namespace eg::ad3
 
 			auto frame = new WMDIParentFrameAD3;
 
-			frame->init("AD3.0 for FY-CRM", wxDefaultPosition, wxSize(1024, 768));
+			frame->init("AD3.0 for FY-CRM", wxDefaultPosition, wxSize(1200, 800));
 
 			return true;
 		}

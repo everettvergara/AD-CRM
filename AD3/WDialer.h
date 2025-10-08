@@ -24,7 +24,7 @@ namespace eg::ad3
 	{
 	public:
 
-		WDialer(wxMDIParentFrame* parent, const char* title);
+		WDialer(wxMDIParentFrame* parent, const char* title, int account_ix);
 
 		//void on_close(wxCloseEvent& event)
 		//{
@@ -70,6 +70,7 @@ namespace eg::ad3
 		wxButton* cancel_button_;
 
 		int current_call_;
+		int account_ix_;
 
 		DialerFilter filter_;
 		DialerData data_;

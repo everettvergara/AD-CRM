@@ -20,7 +20,7 @@
 // todo: - should not be able to make another call if there's an ongoing call
 namespace eg::ad3
 {
-	WDialer::WDialer(wxMDIParentFrame* parent, const char* title) :
+	WDialer::WDialer(wxMDIParentFrame* parent, const char* title, int account_ix) :
 		WChildFrame(
 			WChildProp
 			{
@@ -46,7 +46,8 @@ namespace eg::ad3
 		playback_button_(nullptr),
 		cm_button_(nullptr),
 		data_(),
-		current_call_(-1)
+		current_call_(-1),
+		account_ix_(account_ix)
 
 	{
 		on_init_filter_controls_();
@@ -715,6 +716,21 @@ namespace eg::ad3
 									return std::format("AUTO DIALER: Attempted to call {} but call did not connect.", data_.mobile);
 								}();
 
+							const auto status = [&info, this] -> std::string
+								{
+									if (info.lastStatusCode == PJSIP_SC_BUSY_HERE or info.lastStatusCode == PJSIP_SC_BUSY_EVERYWHERE)
+									{
+										return "BUSY";
+									}
+
+									else if (info.lastStatusCode == PJSIP_SC_REQUEST_TIMEOUT or info.lastStatusCode == PJSIP_SC_TEMPORARILY_UNAVAILABLE)
+									{
+										return "TIMEOUT";
+									}
+
+									return "NOANSWER";
+								}();
+
 							const size_t uploader_contact_id = 0;
 
 							stmt.bind(0, &data_.id);
@@ -722,7 +738,7 @@ namespace eg::ad3
 							stmt.bind(2, remarks.c_str(), remarks.size());
 							stmt.bind(3, &uploader_contact_id);
 							stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
-							stmt.bind(5, data_.status.c_str(), data_.status.size());
+							stmt.bind(5, status.c_str(), status.size());
 
 							nanodbc::result res = nanodbc::execute(stmt);
 						}
@@ -962,7 +978,8 @@ namespace eg::ad3
 			current_call_ = calls.make_call(
 				std::bind(&WDialer::on_call_state_changed_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
 				data_.file_recording,
-				data_.mobile);
+				data_.mobile,
+				account_ix_);
 
 			if (current_call_ < 0)
 			{

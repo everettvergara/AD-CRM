@@ -45,7 +45,7 @@ namespace eg::ad3
 		return true;
 	}
 
-	int ServicePJCalls::make_call(std::function<void(pjsip_inv_state, pj::CallInfo info, bool)> fn, const std::string& wav_filename, const std::string& mobile)
+	int ServicePJCalls::make_call(std::function<void(pjsip_inv_state, pj::CallInfo info, bool)> fn, const std::string& wav_filename, const std::string& mobile, int account_ix)
 	{
 		register_current_thread_in_pj("make_call");
 
@@ -56,8 +56,9 @@ namespace eg::ad3
 			return -1;
 		}
 
+		LOG_II("ServicePJCalls::make_call: to {}, using account {}", mobile, account_ix);
 		auto current_call = std::make_shared<PJCallManualDial>(
-			ServicePJAccount::instance().account,
+			*ServicePJAccount::instance().accounts.at(account_ix),
 			std::move(fn),
 			wav_filename);
 

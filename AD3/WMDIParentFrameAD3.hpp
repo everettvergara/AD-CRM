@@ -6,6 +6,7 @@
 #include "WDialer.h"
 //#include "WDialer2.h"
 #include "resource.h"
+#include "ServicePJAccount.h"
 
 namespace eg::ad3
 {
@@ -55,7 +56,13 @@ namespace eg::ad3
 			static constexpr auto id = "dialer1";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this, "Dialer - 1");
+				if (ServicePJAccount::instance().accounts.size() == 0)
+				{
+					wxMessageBox("No SIP account configured. Please configure at least one SIP account in Settings.", this->GetTitle(), wxOK | wxICON_ERROR, this);
+					return;
+				}
+
+				auto child = new WDialer(this, "Dialer - 1", 0);
 				child_ids[id] = child;
 
 				return;
@@ -67,7 +74,12 @@ namespace eg::ad3
 			static constexpr auto id = "dialer2";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this, "Dialer - 2");
+				if (ServicePJAccount::instance().accounts.size() == 0)
+				{
+					wxMessageBox("No SIP account configured. Please configure at least one SIP account in Settings.", this->GetTitle(), wxOK | wxICON_ERROR, this);
+					return;
+				}
+				auto child = new WDialer(this, "Dialer - 2", 0);
 				child_ids[id] = child;
 
 				return;
@@ -79,7 +91,13 @@ namespace eg::ad3
 			static constexpr auto id = "dialer3";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this, "Dialer - 3");
+				if (ServicePJAccount::instance().accounts.size() < 2)
+				{
+					wxMessageBox("No SIP#2 account configured. Please configure at least two SIP accounts in Settings.", this->GetTitle(), wxOK | wxICON_ERROR, this);
+					return;
+				}
+
+				auto child = new WDialer(this, "Dialer - 3", 1);
 				child_ids[id] = child;
 
 				return;
@@ -91,7 +109,13 @@ namespace eg::ad3
 			static constexpr auto id = "dialer4";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this, "Dialer - 4");
+				if (ServicePJAccount::instance().accounts.size() < 2)
+				{
+					wxMessageBox("No SIP#2 account configured. Please configure at least two SIP accounts in Settings.", this->GetTitle(), wxOK | wxICON_ERROR, this);
+					return;
+				}
+
+				auto child = new WDialer(this, "Dialer - 4", 1);
 				child_ids[id] = child;
 
 				return;
@@ -103,7 +127,13 @@ namespace eg::ad3
 			static constexpr auto id = "dialer5";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this, "Dialer - 5");
+				if (ServicePJAccount::instance().accounts.size() < 3)
+				{
+					wxMessageBox("No SIP#2 account configured. Please configure at least three SIP accounts in Settings.", this->GetTitle(), wxOK | wxICON_ERROR, this);
+					return;
+				}
+
+				auto child = new WDialer(this, "Dialer - 5", 2);
 				child_ids[id] = child;
 
 				return;
@@ -115,7 +145,13 @@ namespace eg::ad3
 			static constexpr auto id = "dialer6";
 			if (not is_child_active(id))
 			{
-				auto child = new WDialer(this, "Dialer - 6");
+				if (ServicePJAccount::instance().accounts.size() < 3)
+				{
+					wxMessageBox("No SIP#2 account configured. Please configure at least three SIP accounts in Settings.", this->GetTitle(), wxOK | wxICON_ERROR, this);
+					return;
+				}
+
+				auto child = new WDialer(this, "Dialer - 6", 2);
 				child_ids[id] = child;
 
 				return;

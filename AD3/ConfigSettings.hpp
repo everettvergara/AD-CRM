@@ -14,6 +14,8 @@ namespace eg::ad3
 		std::string server_port;
 		std::string sip_id;
 		std::string sip_password;
+		std::string sip_id2;
+		std::string sip_password2;
 		size_t concurrent_calls;
 
 		size_t max_registration_attempts;
@@ -38,6 +40,8 @@ namespace eg::ad3
 				{"server_port", server_port},
 				{"sip_id", sip_id},
 				{"sip_password", sip_password},
+				{"sip_id2", sip_id2},
+				{"sip_password2", sip_password2},
 				{"concurrent_calls", concurrent_calls},
 				{"max_registration_attempts", max_registration_attempts},
 				{"server_timeout_secs", server_timeout_secs},
@@ -59,6 +63,8 @@ namespace eg::ad3
 			server_port(data.value("server_port", "5060")),
 			sip_id(data.value("sip_id", "1234")),
 			sip_password(data.value("sip_password", "0000")),
+			sip_id2(data.value("sip_id", "NA")),
+			sip_password2(data.value("sip_password", "NA")),
 			concurrent_calls(data.value("concurrent_calls", 1ull)),
 			max_registration_attempts(data.value("max_registration_attemps", 3ull)),
 			server_timeout_secs(data.value("server_timeout_secs", 10u)),

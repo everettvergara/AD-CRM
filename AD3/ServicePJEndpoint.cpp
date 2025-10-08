@@ -17,6 +17,7 @@ namespace eg::ad3
 				pj::EpConfig ep_config{};
 				ep_config.logConfig.level = k_pj_log_level;
 				ep_config.logConfig.consoleLevel = k_pj_log_level;
+				ep_config.uaConfig.maxCalls = 12;
 				return ep_config;
 			}());
 

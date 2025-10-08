@@ -19,7 +19,7 @@ namespace eg::ad3
 	public:
 		bool is_registered;
 
-		PJAccount();
+		PJAccount(const std::string& sip_id, const std::string& password);
 
 		void wait_until_registered_or_signal_exit();
 		void onRegState(pj::OnRegStateParam& prm);
