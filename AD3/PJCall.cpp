@@ -30,8 +30,8 @@ namespace eg::ad3
 				lock.unlock();
 
 				if (last_call_state == PJSIP_INV_STATE_CALLING or
-					last_call_state == PJSIP_INV_STATE_EARLY or
-					last_call_state == PJSIP_INV_STATE_CONNECTING)
+					last_call_state == PJSIP_INV_STATE_EARLY /* or
+					last_call_state == PJSIP_INV_STATE_CONNECTING*/)
 				{
 					this->hangup_call();
 				}

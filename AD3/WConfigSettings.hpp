@@ -16,9 +16,9 @@ namespace eg::ad3
 				WChildProp
 				{
 					.parent = parent,
-					.title = "AD3.0 Settings",
+					.title = "AD3.20251010.1 Settings",
 					.pos = wxDefaultPosition,
-					.size = wxSize(400, 900),
+					.size = wxSize(400, 600),
 					.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
 					.form_columns = 2,
 					.has_tree = false
@@ -30,11 +30,12 @@ namespace eg::ad3
 
 			register_text_input("sip_server_ip", "SIP Server IP:", settings.server_ip);
 			register_text_input("sip_server_port", "Port:", settings.server_port);
-			register_text_input("sip_id", "SIP ID:", settings.sip_id);
-			register_text_input("sip_password", "SIP Password:", settings.sip_password);
-			register_text_input("sip_id2", "SIP ID2:", settings.sip_id2);
-			register_text_input("sip_password2", "SIP Password2:", settings.sip_password2);
+
+			register_text_input("sip_accounts", "SIP Accounts:", settings.sip_accounts_str());
+			//register_text_input("sip_id2", "SIP ID2:", settings.sip_id2);
+			//register_text_input("sip_password2", "SIP Password2:", settings.sip_password2);
 			register_text_input("concurrent_calls", "Concurrent calls:", std::to_string(settings.concurrent_calls));
+			register_text_input("max_calls", "Max calls:", std::to_string(settings.max_calls));
 
 			register_text_input("max_registration_attempts", "Max account registration attempts:", std::to_string(settings.max_registration_attempts));
 			register_text_input("server_timeout_secs", "Server timeout (secs):", std::to_string(settings.server_timeout_secs));
@@ -62,11 +63,12 @@ namespace eg::ad3
 		{
 			auto server_ip = get<wxTextCtrl>("sip_server_ip")->GetValue();
 			auto server_port = get<wxTextCtrl>("sip_server_port")->GetValue();
-			auto sip_id = get<wxTextCtrl>("sip_id")->GetValue();
-			auto sip_password = get<wxTextCtrl>("sip_password")->GetValue();
-			auto sip_id2 = get<wxTextCtrl>("sip_id2")->GetValue();
-			auto sip_password2 = get<wxTextCtrl>("sip_password2")->GetValue();
+			auto sip_accounts = get<wxTextCtrl>("sip_accounts")->GetValue();
+			//auto sip_password = get<wxTextCtrl>("sip_password")->GetValue();
+			//auto sip_id2 = get<wxTextCtrl>("sip_id2")->GetValue();
+			//auto sip_password2 = get<wxTextCtrl>("sip_password2")->GetValue();
 			auto concurrent_calls = get<wxTextCtrl>("concurrent_calls")->GetValue();
+			auto max_calls = get<wxTextCtrl>("max_calls")->GetValue();
 
 			auto max_registration_attempts = get<wxTextCtrl>("max_registration_attempts")->GetValue();
 			auto server_timeout_secs = get<wxTextCtrl>("server_timeout_secs")->GetValue();
@@ -92,11 +94,11 @@ namespace eg::ad3
 
 			if (server_ip.IsEmpty()) return "Server IP is empty";
 			if (server_port.IsEmpty()) return "Port is empty";
-			if (sip_id.IsEmpty()) return "SIP ID is empty";
-			if (sip_password.IsEmpty()) return "Password is empty";
-
-			if (sip_id2.IsEmpty()) return "SIP ID2 is empty";
-			if (sip_password2.IsEmpty()) return "Password2 is empty";
+			if (sip_accounts.IsEmpty()) return "SIP Accounts is empty";
+			//if (sip_id.IsEmpty()) return "SIP ID is empty";
+			//if (sip_password.IsEmpty()) return "Password is empty";
+			//if (sip_id2.IsEmpty()) return "SIP ID2 is empty";
+			//if (sip_password2.IsEmpty()) return "Password2 is empty";
 
 			if (concurrent_calls.IsEmpty()) return "Concurrent calls is empty";
 			if (max_registration_attempts.IsEmpty()) return "Max registration attempts is empty";
@@ -109,12 +111,13 @@ namespace eg::ad3
 			auto& settings = ConfigSettings::instance();
 			settings.server_ip = server_ip.ToStdString();
 			settings.server_port = server_port.ToStdString();
-			settings.sip_id = sip_id.ToStdString();
-			settings.sip_password = sip_password.ToStdString();
-			settings.sip_id2 = sip_id2.ToStdString();
-			settings.sip_password2 = sip_password2.ToStdString();
+			//settings.sip_id = sip_id.ToStdString();
+			//settings.sip_password = sip_password.ToStdString();
+			//settings.sip_id2 = sip_id2.ToStdString();
+			//settings.sip_password2 = sip_password2.ToStdString();
 
 			settings.concurrent_calls = std::stoull(concurrent_calls.ToStdString());
+			settings.max_calls = std::stoull(max_calls.ToStdString());
 			settings.max_registration_attempts = std::stoull(max_registration_attempts.ToStdString());
 			settings.server_timeout_secs = std::stoul(server_timeout_secs.ToStdString());
 			settings.server_keep_alive_secs = std::stoul(server_keep_alive_secs.ToStdString());

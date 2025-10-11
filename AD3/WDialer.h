@@ -24,20 +24,7 @@ namespace eg::ad3
 	{
 	public:
 
-		WDialer(wxMDIParentFrame* parent, const char* title, int account_ix);
-
-		//void on_close(wxCloseEvent& event)
-		//{
-		//	if (current_call_ >= 0)
-		//	{
-		//		wxMessageBox("Call is ongoing. Cancel / Stop the call first.", this->GetTitle());
-		//		event.Veto();
-		//		return;
-		//	}
-
-		//	// normal close
-		//	Destroy();  // or event.Skip() if you want the default handler
-		//}
+		WDialer(wxMDIParentFrame* parent, const char* title, size_t account_ix);
 
 	protected:
 
@@ -70,7 +57,7 @@ namespace eg::ad3
 		wxButton* cancel_button_;
 
 		int current_call_;
-		int account_ix_;
+		size_t account_ix_;
 
 		DialerFilter filter_;
 		DialerData data_;

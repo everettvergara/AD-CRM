@@ -15,12 +15,11 @@
 #include "ServicePJCalls.h"
 #include "ConfigSettings.hpp"
 #include "ServicePJCalls.h"
-
 // TODO: to call count not reset when client, campaign, prio changed
 // todo: - should not be able to make another call if there's an ongoing call
 namespace eg::ad3
 {
-	WDialer::WDialer(wxMDIParentFrame* parent, const char* title, int account_ix) :
+	WDialer::WDialer(wxMDIParentFrame* parent, const char* title, size_t account_ix) :
 		WChildFrame(
 			WChildProp
 			{
@@ -634,35 +633,35 @@ namespace eg::ad3
 					{
 						data_.call_confirmed = time(nullptr);
 						// Update the comment
-						{
-							const auto& settings = ConfigSettings::instance();
-							auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
-								settings.db_driver,
-								settings.db_server,
-								settings.db_database,
-								settings.db_user,
-								settings.db_password);
+						//{
+							//const auto& settings = ConfigSettings::instance();
+							//auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+							//	settings.db_driver,
+							//	settings.db_server,
+							//	settings.db_database,
+							//	settings.db_user,
+							//	settings.db_password);
 
-							nanodbc::connection conn(NANODBC_TEXT(db_conn));
+							//nanodbc::connection conn(NANODBC_TEXT(db_conn));
 
-							if (not conn.connected())
-							{
-								wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
-								return;
-							}
+							//if (not conn.connected())
+							//{
+							//	wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
+							//	return;
+							//}
 
-							nanodbc::statement stmt(conn);
-							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
-							const std::string remarks = std::format("AUTO DIALER: {} {}", data_.status, data_.mobile);
-							stmt.bind(0, &data_.id);
-							stmt.bind(1, &data_.collector_id);
-							stmt.bind(2, remarks.c_str(), remarks.size());
-							stmt.bind(3, &data_.uploader_contact_id);
-							stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
-							stmt.bind(5, data_.status.c_str(), data_.status.size());
+							//nanodbc::statement stmt(conn);
+							//prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
+							//const std::string remarks = std::format("AUTO DIALER: {} {}", data_.status, data_.mobile);
+							//stmt.bind(0, &data_.id);
+							//stmt.bind(1, &data_.collector_id);
+							//stmt.bind(2, remarks.c_str(), remarks.size());
+							//stmt.bind(3, &data_.uploader_contact_id);
+							//stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
+							//stmt.bind(5, data_.status.c_str(), data_.status.size());
 
-							nanodbc::result res = nanodbc::execute(stmt);
-						}
+							//nanodbc::result res = nanodbc::execute(stmt);
+						//}
 
 						// Run the CRM
 
@@ -695,6 +694,7 @@ namespace eg::ad3
 							if (not conn.connected())
 							{
 								wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
+
 								return;
 							}
 
@@ -797,7 +797,7 @@ namespace eg::ad3
 					if (not filter_.is_auto)
 					{
 						update_components_state_();
-						wxMessageBox("Call ended", this->GetTitle(), wxOK | wxICON_INFORMATION);
+						// wxMessageBox("Call ended", this->GetTitle(), wxOK | wxICON_INFORMATION);
 					}
 					else
 					{
@@ -810,7 +810,7 @@ namespace eg::ad3
 							// wait for the user to update the contract master first.
 							if (data_.has_confirmed_status())
 							{
-								wxMessageBox("Press Call once you are done updating the contract master.", "Info", wxOK | wxICON_INFORMATION);
+								// wxMessageBox("Press Call once you are done updating the contract master.", "Info", wxOK | wxICON_INFORMATION);
 							}
 
 							// Otherwise proceed to the next call.
@@ -850,7 +850,7 @@ namespace eg::ad3
 	{
 		if (filter_.selected_status->to_call_count() == 0)
 		{
-			wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			return;
 		}
 
@@ -866,7 +866,7 @@ namespace eg::ad3
 
 		if (not conn.connected())
 		{
-			wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
+			//wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
 			return;
 		}
 
@@ -887,7 +887,7 @@ namespace eg::ad3
 				{
 					filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
 
-					wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+					//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 					update_components_from_data_();
 
 					return;
@@ -933,7 +933,7 @@ namespace eg::ad3
 		}
 		else
 		{
-			wxMessageBox("No record retrieved.", this->GetTitle(), wxOK | wxICON_ERROR, this);
+			//wxMessageBox("No record retrieved.", this->GetTitle(), wxOK | wxICON_ERROR, this);
 			return;
 		}
 
@@ -968,12 +968,14 @@ namespace eg::ad3
 		{
 			if (current_call_ >= 0)
 			{
-				wxMessageBox("There is already an ongoing call.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+				//wxMessageBox("There is already an ongoing call.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 				return;
 			}
 
 			auto& calls = ServicePJCalls::instance();
 			data_.file_recording = generate_wav_filename(data_.mobile, validated_name);
+
+			LOG_II("Calling {} {}", account_ix_, data_.file_recording);
 
 			current_call_ = calls.make_call(
 				std::bind(&WDialer::on_call_state_changed_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
@@ -981,29 +983,37 @@ namespace eg::ad3
 				data_.mobile,
 				account_ix_);
 
+			LOG_II("1");
+
 			if (current_call_ < 0)
 			{
-				wxMessageBox("Could not make the call until active call is stopped.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+				//wxMessageBox("Could not make the call until active call is stopped.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 				current_call_ = -1;
 				return;
 			}
 		}
 
+		LOG_II("2");
+
 		data_.time_of_call = eg::string::datetime_to_formatted_string();
-		time_of_call_->SetValue(data_.time_of_call);
+		time_of_call_->ChangeValue(data_.time_of_call);
 		data_.state = DialerState::Calling;
 
+		LOG_II("3");
+
 		update_components_state_();
+
+		LOG_II("4");
 	}
 
 	void WDialer::on_call_again_(wxCommandEvent& e)
 	{
 		if (data_.state == DialerState::JustEnded)
 		{
-			if (wxMessageBox("Save this record before proceeding with the call?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
-			{
-				save_();
-			}
+			//if (wxMessageBox("Save this record before proceeding with the call?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
+			//{
+			save_();
+			//}
 		}
 
 		data_.state = DialerState::New;
@@ -1087,7 +1097,7 @@ namespace eg::ad3
 
 		update_components_state_();
 
-		wxMessageBox("Call record saved", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+		//wxMessageBox("Call record saved", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 	}
 
 	void WDialer::save_()
@@ -1199,17 +1209,17 @@ namespace eg::ad3
 	{
 		if (current_call_ >= 0)
 		{
-			wxMessageBox("There's an ongoing call. Stop / End the call first.", this->GetTitle());
+			//wxMessageBox("There's an ongoing call. Stop / End the call first.", this->GetTitle());
 			event.Veto();
 			return;
 		}
 
 		if (data_.state == DialerState::JustEnded)
 		{
-			if (wxMessageBox("Do you want to save record before closing the window?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
-			{
-				save_();
-			}
+			//if (wxMessageBox("Do you want to save record before closing the window?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
+			//{
+			save_();
+			//}
 		}
 
 		Destroy();
@@ -1219,16 +1229,16 @@ namespace eg::ad3
 	{
 		if (current_call_ >= 0)
 		{
-			wxMessageBox("There's an ongoing call. Stop / End the call first.", this->GetTitle());
+			//wxMessageBox("There's an ongoing call. Stop / End the call first.", this->GetTitle());
 			return;
 		}
 
 		if (data_.state == DialerState::JustEnded)
 		{
-			if (wxMessageBox("Do you want to save record before closing the window?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
-			{
-				save_();
-			}
+			//if (wxMessageBox("Do you want to save record before closing the window?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
+			//{
+			save_();
+			//}
 		}
 
 		Close(true);
@@ -1255,11 +1265,11 @@ namespace eg::ad3
 			update_components_state_();
 			if (not result)
 			{
-				wxMessageBox("Cannot play recording when there's an active call.", this->GetTitle());
+				//wxMessageBox("Cannot play recording when there's an active call.", this->GetTitle());
 				return;
 			}
 
-			wxMessageBox("Recording played successfully.", this->GetTitle());
+			//wxMessageBox("Recording played successfully.", this->GetTitle());
 			});
 	}
 
@@ -1267,7 +1277,7 @@ namespace eg::ad3
 	{
 		if (data_.id == 0 or data_.collector_id == 0)
 		{
-			wxMessageBox("No CM associated with this call", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			//wxMessageBox("No CM associated with this call", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			return;
 		}
 
@@ -1300,7 +1310,7 @@ namespace eg::ad3
 
 			//LOG_II("3");
 			auto sql = std::format("select	a.collector_id, a.client_id, a.client_name, a.client_campaign_id, a.client_campaign_name, a.prio_type_id, a.prio_type, a.wmc_status_id, a.wmc_status_name, a.name, a.min_id, a.max_id, a.next_id, a.ucode, a.common_pool, a.cache_id "
-				"from	vw_ad_cache_priority_series as a where a.sip_no = '{}' order by a.client_name, a.client_campaign_name, a.prio_type, a.wmc_status_name", settings.sip_id);
+				"from	vw_ad_cache_priority_series as a where a.sip_no = '{}' order by a.client_name, a.client_campaign_name, a.prio_type, a.wmc_status_name", settings.sip_accounts.front().sip_id);
 			nanodbc::result results = nanodbc::execute(
 				conn,
 				NANODBC_TEXT(sql));

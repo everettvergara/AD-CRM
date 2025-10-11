@@ -23,7 +23,7 @@ namespace eg::ad3
 		static void shutdown();
 
 		bool play_wav(const std::string& wav_filename);
-		int  make_call(std::function<void(pjsip_inv_state, pj::CallInfo info, bool)> fn, const std::string& wav_filename, const std::string& mobile, int account_ix);
+		int  make_call(std::function<void(pjsip_inv_state, pj::CallInfo info, bool)> fn, const std::string& wav_filename, const std::string& mobile, size_t account_ix);
 		void hangup_all_calls_except(int except_call);
 		void hangup_all_calls();
 		void hangup_and_remove_call(int call_id);

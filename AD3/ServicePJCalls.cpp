@@ -45,22 +45,30 @@ namespace eg::ad3
 		return true;
 	}
 
-	int ServicePJCalls::make_call(std::function<void(pjsip_inv_state, pj::CallInfo info, bool)> fn, const std::string& wav_filename, const std::string& mobile, int account_ix)
+	int ServicePJCalls::make_call(std::function<void(pjsip_inv_state, pj::CallInfo info, bool)> fn, const std::string& wav_filename, const std::string& mobile, size_t account_ix)
 	{
+		LOG_II("makecall-1 {}", mobile);
+
 		register_current_thread_in_pj("make_call");
+		LOG_II("makecall-2 {}", mobile);
 
 		std::lock_guard lock(call_mutex_);
+
+		LOG_II("makecall-3 {}", mobile);
 
 		if (active_call_id_.has_value())
 		{
 			return -1;
 		}
 
-		LOG_II("ServicePJCalls::make_call: to {}, using account {}", mobile, account_ix);
+		LOG_II("makecall-4 {}", mobile);
+
 		auto current_call = std::make_shared<PJCallManualDial>(
 			*ServicePJAccount::instance().accounts.at(account_ix),
 			std::move(fn),
 			wav_filename);
+
+		LOG_II("makecall-5 {}", mobile);
 
 		current_call->makeCall(std::format("sip:{}@{}", mobile, ConfigSettings::instance().server_ip), []
 			{
@@ -70,9 +78,15 @@ namespace eg::ad3
 				return p;
 			}());
 
+		LOG_II("makecall-6 {}", mobile);
+
 		auto id = current_call->getId();
 
+		LOG_II("makecall-7 {}", mobile);
+
 		calls_[id] = current_call;
+
+		LOG_II("makecall-8 {}", mobile);
 
 		return id;
 	}

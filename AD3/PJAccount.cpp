@@ -7,20 +7,22 @@
 
 namespace eg::ad3
 {
-	PJAccount::PJAccount(const std::string& sip_id, const std::string& password) :
+	PJAccount::PJAccount(const std::string& sip_id, const std::string& sip_password, pj::TransportId tid) :
 		is_registered(false),
 		failed_registration_ctr_(0)
 	{
 		LOG_INSTANCE;
 
-		LOG_I("PJAccount::PJAccount: Creating PJ Account");
-		this->create([this, &sip_id, &password]
+		LOG_I("PJAccount::PJAccount: Creating PJ Account: {} {}", sip_id, sip_password);
+
+		this->create([this, &sip_id, &sip_password, tid]
 			{
 				pj::AccountConfig account_config{};
 				const auto& settings = ConfigSettings::instance();
 
 				account_config.idUri = std::format(k_pj_sip_user_server_format, sip_id, settings.server_ip);
-				account_config.sipConfig.authCreds.emplace_back("digest", "*", sip_id, 0, password);
+				account_config.sipConfig.authCreds.emplace_back("digest", "*", sip_id, 0, sip_password);
+				account_config.sipConfig.transportId = tid;
 
 				account_config.regConfig.timeoutSec = settings.server_timeout_secs;
 				account_config.regConfig.registrarUri = std::format(k_pj_sip_server_port_no_format, settings.server_ip, settings.server_port);
@@ -57,25 +59,23 @@ namespace eg::ad3
 
 	void PJAccount::onRegState(pj::OnRegStateParam& prm)
 	{
-		LOG_INSTANCE;
-		//LOG_I("PJAccount::onRegState:  ({}) {}", static_cast<int>(prm.status), prm.reason);
-
 		is_registered = (prm.code == PJSIP_SC_OK);
 
 		if (is_registered)
 		{
-			//LOG_I("account::onRegState: Account registration successful.");
 			failed_registration_ctr_ = 0;
 			cv_.notify_one();
+
+			LOG_II("account::onRegState: Registration successful:");
 		}
 		else
 		{
 			++failed_registration_ctr_;
-			LOG_X("account::onRegState: Registration failed: {}", static_cast<int>(prm.code));
+			LOG_XX("account::onRegState: Registration failed: {}", static_cast<int>(prm.code));
 
 			if (failed_registration_ctr_ == ConfigSettings::instance().max_registration_attempts)
 			{
-				LOG_X("Max registration failed. Signaling exit.");
+				LOG_XX("Max registration failed. Signaling exit.");
 
 				sys::ServiceCtrlC::instance().signal_exit();
 				cv_.notify_one();
@@ -85,13 +85,9 @@ namespace eg::ad3
 
 	void PJAccount::onIncomingCall(pj::OnIncomingCallParam& prm)
 	{
-		//LOG_INSTANCE;
-		//LOG_I("PJAccount::onIncomingCall:");
 	}
 
 	void PJAccount::onIncomingSubscribe(pj::OnIncomingSubscribeParam&)
 	{
-		//LOG_INSTANCE;
-		//LOG_I("PJAccount::onIncomingSubscribe:");
 	}
 }

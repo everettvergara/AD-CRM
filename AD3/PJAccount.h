@@ -3,7 +3,6 @@
 #include <string>
 #include <condition_variable>
 #include <mutex>
-
 #include <pjsua2.hpp>
 #include "Common/NoCopyMove.hpp"
 
@@ -19,8 +18,7 @@ namespace eg::ad3
 	public:
 		bool is_registered;
 
-		PJAccount(const std::string& sip_id, const std::string& password);
-
+		PJAccount(const std::string& sip_id, const std::string& sip_password, pj::TransportId id);
 		void wait_until_registered_or_signal_exit();
 		void onRegState(pj::OnRegStateParam& prm);
 		void onIncomingCall(pj::OnIncomingCallParam& prm);

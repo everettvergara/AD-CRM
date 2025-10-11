@@ -3,6 +3,8 @@
 #include <cassert>
 #include "ConfigSettings.hpp"
 #include "Common/Log.hpp"
+//#include "pjmedia/config.h"
+//#include "pjmedia/endpoint.h"
 
 namespace eg::ad3
 {
@@ -17,7 +19,11 @@ namespace eg::ad3
 				pj::EpConfig ep_config{};
 				ep_config.logConfig.level = k_pj_log_level;
 				ep_config.logConfig.consoleLevel = k_pj_log_level;
-				ep_config.uaConfig.maxCalls = 12;
+				ep_config.uaConfig.maxCalls = k_max_calls;
+				ep_config.uaConfig.threadCnt = k_max_calls;
+				ep_config.medConfig.threadCnt = k_max_calls;
+				ep_config.medConfig.maxMediaPorts = k_max_calls * 8;
+
 				return ep_config;
 			}());
 
@@ -50,13 +56,23 @@ namespace eg::ad3
 			ep.audDevManager().setNullDev();
 		}
 
-		ep.transportCreate(PJSIP_TRANSPORT_UDP, []
-			{
-				pj::TransportConfig tp_config;
-				tp_config.port = k_endpoint_port_no;
-				return tp_config;
-			}());
-		LOG_II("ServicePJEndpoint::ServicePJEndpoint: Transport Created");
+		const auto& settings = ConfigSettings::instance();
+		transport_ids.reserve(settings.max_ep());
+
+		for (size_t i = 0; i < settings.max_ep(); ++i)
+		{
+			transport_ids.emplace_back
+			(
+				ep.transportCreate(PJSIP_TRANSPORT_UDP, [i]
+					{
+						pj::TransportConfig tp_config;
+						tp_config.port = k_endpoint_port_no + i * 2;
+						return tp_config;
+					}())
+			);
+
+			LOG_II("ServicePJEndpoint::ServicePJEndpoint: Transport Created {}", k_endpoint_port_no + i * 2);
+		}
 
 		ep.libStart();
 		LOG_II("ServicePJEndpoint::ServicePJEndpoint: Lib Started");

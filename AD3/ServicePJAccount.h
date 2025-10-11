@@ -18,8 +18,6 @@ namespace eg::ad3
 
 		std::vector<std::unique_ptr<PJAccount>> accounts;
 
-		//std::mutex call_mutex;
-
 		static void init();
 		static ServicePJAccount& instance();
 		static void shutdown();
