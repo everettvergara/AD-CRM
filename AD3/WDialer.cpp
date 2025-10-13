@@ -975,7 +975,7 @@ namespace eg::ad3
 			auto& calls = ServicePJCalls::instance();
 			data_.file_recording = generate_wav_filename(data_.mobile, validated_name);
 
-			LOG_II("Calling {} {}", account_ix_, data_.file_recording);
+			//LOG_II("Calling {} {}", account_ix_, data_.file_recording);
 
 			current_call_ = calls.make_call(
 				std::bind(&WDialer::on_call_state_changed_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
@@ -983,7 +983,7 @@ namespace eg::ad3
 				data_.mobile,
 				account_ix_);
 
-			LOG_II("1");
+			//LOG_II("1");
 
 			if (current_call_ < 0)
 			{
@@ -993,17 +993,17 @@ namespace eg::ad3
 			}
 		}
 
-		LOG_II("2");
+		//LOG_II("2");
 
 		data_.time_of_call = eg::string::datetime_to_formatted_string();
 		time_of_call_->ChangeValue(data_.time_of_call);
 		data_.state = DialerState::Calling;
 
-		LOG_II("3");
+		//LOG_II("3");
 
 		update_components_state_();
 
-		LOG_II("4");
+		//LOG_II("4");
 	}
 
 	void WDialer::on_call_again_(wxCommandEvent& e)

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <pjsua2.hpp>
 #include "Common/NoCopyMove.hpp"
 

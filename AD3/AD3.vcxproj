@@ -145,6 +145,7 @@
     <ClCompile Include="PJAccount.cpp" />
     <ClCompile Include="PJCall.cpp" />
     <ClCompile Include="PJHelper.cpp" />
+    <ClCompile Include="ServiceMsg.cpp" />
     <ClCompile Include="ServicePJAccount.cpp" />
     <ClCompile Include="ServicePJCalls.cpp" />
     <ClCompile Include="ServicePJEndpoint.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="PJCallManualDial.hpp" />
     <ClInclude Include="PJHelper.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="ServiceMsg.h" />
     <ClInclude Include="ServicePJAccount.h" />
     <ClInclude Include="ServicePJCalls.h" />
     <ClInclude Include="ServicePJEndpoint.h" />
