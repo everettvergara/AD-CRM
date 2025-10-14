@@ -23,7 +23,7 @@ namespace eg::ad3
 					.parent = parent,
 					.title = "Notification Messages",
 					.pos = wxDefaultPosition,
-					.size = wxSize(400, 400),
+					.size = wxSize(500, 700),
 					.style = (wxDEFAULT_FRAME_STYLE & ~(wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxSYSTEM_MENU)) | wxSTAY_ON_TOP,
 					.form_columns = 2,
 					.has_tree = false
@@ -43,6 +43,16 @@ namespace eg::ad3
 			lts_.emplace_back(register_text_msg("title8", "msg8", "", "", wxDefaultPosition, wxDefaultSize));
 			lts_.emplace_back(register_text_msg("title9", "msg9", "", "", wxDefaultPosition, wxDefaultSize));
 			lts_.emplace_back(register_text_msg("title10", "msg10", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title11", "msg11", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title12", "msg12", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title13", "msg13", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title14", "msg14", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title15", "msg15", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title16", "msg16", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title17", "msg17", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title18", "msg18", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title19", "msg19", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title20", "msg20", "", "", wxDefaultPosition, wxDefaultSize));
 
 			ServiceMsg::instance().reg_monitor("wmsg", &cv_, [this]
 				{

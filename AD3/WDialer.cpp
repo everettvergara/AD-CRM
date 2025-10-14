@@ -636,36 +636,6 @@ namespace eg::ad3
 					if (data_.uploader_contact_id > 0)
 					{
 						data_.call_confirmed = time(nullptr);
-						// Update the comment
-						//{
-							//const auto& settings = ConfigSettings::instance();
-							//auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
-							//	settings.db_driver,
-							//	settings.db_server,
-							//	settings.db_database,
-							//	settings.db_user,
-							//	settings.db_password);
-
-							//nanodbc::connection conn(NANODBC_TEXT(db_conn));
-
-							//if (not conn.connected())
-							//{
-							//	wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
-							//	return;
-							//}
-
-							//nanodbc::statement stmt(conn);
-							//prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
-							//const std::string remarks = std::format("AUTO DIALER: {} {}", data_.status, data_.mobile);
-							//stmt.bind(0, &data_.id);
-							//stmt.bind(1, &data_.collector_id);
-							//stmt.bind(2, remarks.c_str(), remarks.size());
-							//stmt.bind(3, &data_.uploader_contact_id);
-							//stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
-							//stmt.bind(5, data_.status.c_str(), data_.status.size());
-
-							//nanodbc::result res = nanodbc::execute(stmt);
-						//}
 
 						// Run the CRM
 
@@ -923,25 +893,13 @@ namespace eg::ad3
 			data_.collector_id = filter_.selected_status->collector_id; // results.get<size_t>(4);
 			data_.uploader_contact_id = results.get<size_t>(5);
 			data_.ucode = filter_.selected_status->ucode;
-			//auto next_id = filter_.selected_status->next_id;
 
-			/*nanodbc::statement stmt(conn);
-			auto update_sql = std::format("UPDATE tb_ad_cache_priority_series SET next_id = {} WHERE {} between min_id and max_id", next_id + 1, next_id);
-			prepare(stmt, NANODBC_TEXT(update_sql));
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Calling {} {} {}", data_.ucode, data_.name, data_.mobile), eg::ad3::ServiceData::Type::WARNING);
 
-			if (auto result = execute(stmt);
-				result.affected_rows() == 0)
-			{
-				wxMessageBox("Could not update the next_id", this->GetTitle(), wxOK | wxICON_ERROR, this);
-				return;
-			}*/
-
-			//filter_.selected_status->next_id = next_id + 1;
 			update_components_from_data_();
 		}
 		else
 		{
-			//wxMessageBox("No record retrieved.", this->GetTitle(), wxOK | wxICON_ERROR, this);
 			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No record retrieved.", eg::ad3::ServiceData::Type::WARNING);
 
 			return;
@@ -956,7 +914,6 @@ namespace eg::ad3
 	{
 		if (auto err = update_data_from_components_(); err not_eq nullptr)
 		{
-			//wxMessageBox(err, this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			ServiceMsg::instance().log(this->GetTitle().ToStdString(), err, eg::ad3::ServiceData::Type::ERR);
 
 			return;
@@ -965,14 +922,12 @@ namespace eg::ad3
 		const auto validated_name = DialerData::trimmed_name(data_.name);
 		if (validated_name.empty())
 		{
-			//wxMessageBox("Invalid name.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Invalid name.", eg::ad3::ServiceData::Type::ERR);
 
 			return;
 		}
 
-		//data_.ucode = "NA";
-		//ucode_->SetValue(data_.ucode);
+		ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Calling {} {}", data_.name, data_.mobile), eg::ad3::ServiceData::Type::WARNING);
 
 		call_proper_(validated_name);
 	}

@@ -12,7 +12,7 @@
 
 namespace eg::ad3
 {
-	constexpr size_t k_service_msg_max = 10;
+	constexpr size_t k_service_msg_max = 20;
 
 	struct ServiceData
 	{
