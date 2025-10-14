@@ -18,6 +18,7 @@
 
 // TODO: to call count not reset when client, campaign, prio changed
 // todo: - should not be able to make another call if there's an ongoing call
+
 namespace eg::ad3
 {
 	WDialer::WDialer(wxMDIParentFrame* parent, const char* title, size_t account_ix) :
@@ -1319,8 +1320,8 @@ namespace eg::ad3
 			}
 
 			//LOG_II("3");
-			auto sql = std::format("select	a.collector_id, a.client_id, a.client_name, a.client_campaign_id, a.client_campaign_name, a.prio_type_id, a.prio_type, a.wmc_status_id, a.wmc_status_name, a.name, a.min_id, a.max_id, a.next_id, a.ucode, a.common_pool, a.cache_id "
-				"from	vw_ad_cache_priority_series as a where a.sip_no = '{}' order by a.client_name, a.client_campaign_name, a.prio_type, a.wmc_status_name", settings.sip_accounts.front().sip_id);
+			auto sql = std::format("select	a.collector_id, a.client_id, a.client_name, a.client_campaign_id, a.client_campaign_name, a.prio_type_id, a.prio_type, a.status_id, a.status_name, a.name, a.min_id, a.max_id, a.next_id, a.ucode, a.common_pool, a.cache_id "
+				"from	vw_ad_cache_priority_series_new as a where a.sip_no = '{}' order by a.client_name, a.client_campaign_name, a.prio_type, a.status_name", settings.sip_accounts.front().sip_id);
 			nanodbc::result results = nanodbc::execute(
 				conn,
 				NANODBC_TEXT(sql));

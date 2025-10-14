@@ -23,6 +23,9 @@ static constexpr auto k_app_name = "AD3";
 
 wxIMPLEMENT_APP_NO_MAIN(eg::ad3::WAppAD3);
 
+// todo: REDIAL = 3:
+// todo: Add client/campaign/name
+
 int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow)
 {
 	try

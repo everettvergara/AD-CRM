@@ -4,6 +4,7 @@
 #include <vector>
 #include <condition_variable>
 #include <thread>
+#include <format>
 #include "Common/ServiceCtrlC.h"
 #include "WChildFrame.h"
 #include "ServiceMsg.h"
@@ -23,7 +24,7 @@ namespace eg::ad3
 					.title = "Notification Messages",
 					.pos = wxDefaultPosition,
 					.size = wxSize(400, 400),
-					.style = wxDEFAULT_FRAME_STYLE & ~(wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxSYSTEM_MENU),
+					.style = (wxDEFAULT_FRAME_STYLE & ~(wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxSYSTEM_MENU)) | wxSTAY_ON_TOP,
 					.form_columns = 2,
 					.has_tree = false
 				}
@@ -101,8 +102,29 @@ namespace eg::ad3
 			{
 				if (i < lts_.size())
 				{
+					auto tp = std::chrono::zoned_time{ std::chrono::current_zone(), msg.tp };
 					lts_.at(i).label->SetLabel(msg.title);
-					lts_.at(i).text->SetLabel(msg.msg);
+					lts_.at(i).text->SetLabel(std::format(" {:%H:%M}: {}", tp, msg.msg));
+
+					switch (msg.type)
+					{
+					case ServiceData::Type::ERR:
+						lts_.at(i).label->SetForegroundColour(*wxRED);
+						lts_.at(i).text->SetForegroundColour(*wxRED);
+						break;
+					case ServiceData::Type::INFO:
+						lts_.at(i).label->SetForegroundColour(*wxBLUE);
+						lts_.at(i).text->SetForegroundColour(*wxBLUE);
+						break;
+					case ServiceData::Type::WARNING:
+						lts_.at(i).label->SetForegroundColour(*wxYELLOW);
+						lts_.at(i).text->SetForegroundColour(*wxYELLOW);
+						break;
+					default:
+						lts_.at(i).label->SetForegroundColour(*wxBLACK);
+						lts_.at(i).text->SetForegroundColour(*wxBLACK);
+						break;
+					}
 				}
 				else
 				{

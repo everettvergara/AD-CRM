@@ -39,6 +39,8 @@ namespace eg::ad3
 		std::string db_password;
 		std::string fycrm_path;
 
+		size_t redial = 0;
+
 		std::string sip_accounts_str() const
 		{
 			auto sip_accounts = nlohmann::json::array();
@@ -97,7 +99,8 @@ namespace eg::ad3
 				{"db_database", db_database},
 				{"db_user", db_user},
 				{"db_password", db_password},
-				{"fycrm_path", fycrm_path}
+				{"fycrm_path", fycrm_path},
+				{"redial", redial}
 			};
 		}
 
@@ -143,7 +146,8 @@ namespace eg::ad3
 			db_database(data.value("db_database", "wmc")),
 			db_user(data.value("db_user", "sa")),
 			db_password(data.value("db_password", "Kerberos2014!")),
-			fycrm_path(data.value("fycrm_path", "c:/fy-crm/crm_dialer.exe"))
+			fycrm_path(data.value("fycrm_path", "c:/fy-crm/crm_dialer.exe")),
+			redial(data.value("redial", 0))
 		{
 		}
 	};
