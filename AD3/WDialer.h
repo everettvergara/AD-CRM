@@ -69,7 +69,7 @@ namespace eg::ad3
 
 		void call_proper_(const std::string& validated_name);
 		void on_call_manual_();
-		void on_call_auto_();
+		void on_call_auto_(size_t redial);
 
 		void on_call_(wxCommandEvent&);
 		void on_call_again_(wxCommandEvent&);

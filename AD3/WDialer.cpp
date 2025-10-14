@@ -790,7 +790,14 @@ namespace eg::ad3
 							// Otherwise proceed to the next call.
 							else
 							{
-								on_call_auto_();
+								if (data_.redial > 0)
+								{
+									on_call_auto_(data_.redial - 1);
+								}
+								else
+								{
+									on_call_auto_(0);
+								}
 							}
 						}
 
@@ -816,98 +823,116 @@ namespace eg::ad3
 		}
 		else
 		{
-			on_call_auto_();
+			on_call_auto_(ConfigSettings::instance().redial);
 		}
 	}
 
-	void WDialer::on_call_auto_()
+	void WDialer::on_call_auto_(size_t redial)
 	{
-		if (filter_.selected_status->to_call_count() == 0)
+		if (redial == ConfigSettings::instance().redial or redial == 0)
 		{
-			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::INFO);
-
-			return;
-		}
-
-		const auto& settings = ConfigSettings::instance();
-		auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
-			settings.db_driver,
-			settings.db_server,
-			settings.db_database,
-			settings.db_user,
-			settings.db_password);
-
-		nanodbc::connection conn(NANODBC_TEXT(db_conn));
-
-		if (not conn.connected())
-		{
-			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
-
-			return;
-		}
-
-		// Get the next ID from DB instead of cache since multiple windows or a different PC can be used to call
-		// the same CM
-
-		{
-			nanodbc::statement stmt(conn);
-			prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_get_next_id(?)}"));
-			stmt.bind(0, &filter_.selected_status->cache_id);
-
-			nanodbc::result results = nanodbc::execute(stmt);
-
-			if (results.next())
+			if (filter_.selected_status->to_call_count() == 0)
 			{
-				auto next_id = results.get<int>(0);
-				if (next_id == -1 or next_id > filter_.selected_status->max_id)
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::INFO);
+
+				return;
+			}
+
+			const auto& settings = ConfigSettings::instance();
+			auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+				settings.db_driver,
+				settings.db_server,
+				settings.db_database,
+				settings.db_user,
+				settings.db_password);
+
+			nanodbc::connection conn(NANODBC_TEXT(db_conn));
+
+			if (not conn.connected())
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
+
+				return;
+			}
+
+			// Get the next ID from DB instead of cache since multiple windows or a different PC can be used to call
+			// the same CM
+
+			{
+				nanodbc::statement stmt(conn);
+				prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_get_next_id(?)}"));
+				stmt.bind(0, &filter_.selected_status->cache_id);
+
+				nanodbc::result results = nanodbc::execute(stmt);
+
+				if (results.next())
 				{
-					filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
+					auto next_id = results.get<int>(0);
+					if (next_id == -1 or next_id > filter_.selected_status->max_id)
+					{
+						filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
 
-					//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
-					ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::ERR);
+						//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+						ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::ERR);
 
-					update_components_from_data_();
+						update_components_from_data_();
 
-					return;
-				}
-				else
-				{
-					filter_.selected_status->next_id = next_id + 1;
+						return;
+					}
+					else
+					{
+						filter_.selected_status->next_id = next_id + 1;
+					}
 				}
 			}
+
+			const auto retrieve_sql = std::format("select a.cm_id, a.contact_name, a.mobile, a.remarks, a.collector_id, a.uploader_contact_id from vw_ad_lr_priority_new as a where next_id = {}", filter_.selected_status->next_id);
+
+			nanodbc::result results = nanodbc::execute(
+				conn,
+				NANODBC_TEXT(retrieve_sql));
+
+			data_.clear();
+			if (results.next())
+			{
+				data_.id = results.get<size_t>(0);
+				data_.name = results.get<std::string>(1);
+				data_.mobile = results.get<std::string>(2);
+				data_.remarks = results.get<std::string>(3);
+				data_.collector_id = filter_.selected_status->collector_id; // results.get<size_t>(4);
+				data_.uploader_contact_id = results.get<size_t>(5);
+				data_.ucode = filter_.selected_status->ucode;
+				data_.redial = ConfigSettings::instance().redial;
+
+				if (data_.redial > 0)
+				{
+					data_.redial = data_.redial - 1;
+				}
+
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Dialing {} {} {}", data_.ucode, data_.name, data_.mobile), eg::ad3::ServiceData::Type::INFO);
+
+				update_components_from_data_();
+			}
+			else
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No record retrieved.", eg::ad3::ServiceData::Type::WARNING);
+
+				return;
+			}
+
+			const auto validated_name = DialerData::trimmed_name(data_.name);
+
+			call_proper_(validated_name);
 		}
 
-		const auto retrieve_sql = std::format("select a.cm_id, a.contact_name, a.mobile, a.remarks, a.collector_id, a.uploader_contact_id from vw_ad_lr_priority_new as a where next_id = {}", filter_.selected_status->next_id);
-
-		nanodbc::result results = nanodbc::execute(
-			conn,
-			NANODBC_TEXT(retrieve_sql));
-
-		data_.clear();
-		if (results.next())
-		{
-			data_.id = results.get<size_t>(0);
-			data_.name = results.get<std::string>(1);
-			data_.mobile = results.get<std::string>(2);
-			data_.remarks = results.get<std::string>(3);
-			data_.collector_id = filter_.selected_status->collector_id; // results.get<size_t>(4);
-			data_.uploader_contact_id = results.get<size_t>(5);
-			data_.ucode = filter_.selected_status->ucode;
-
-			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Calling {} {} {}", data_.ucode, data_.name, data_.mobile), eg::ad3::ServiceData::Type::WARNING);
-
-			update_components_from_data_();
-		}
+		// Redial
 		else
 		{
-			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No record retrieved.", eg::ad3::ServiceData::Type::WARNING);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Redialing {} {} {}", data_.ucode, data_.name, data_.mobile), eg::ad3::ServiceData::Type::INFO);
 
-			return;
+			const auto validated_name = DialerData::trimmed_name(data_.name);
+			call_proper_(validated_name);
 		}
-
-		const auto validated_name = DialerData::trimmed_name(data_.name);
-
-		call_proper_(validated_name);
 	}
 
 	void WDialer::on_call_manual_()
@@ -927,7 +952,7 @@ namespace eg::ad3
 			return;
 		}
 
-		ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Calling {} {}", data_.name, data_.mobile), eg::ad3::ServiceData::Type::WARNING);
+		ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Dialing {} {}", data_.name, data_.mobile), eg::ad3::ServiceData::Type::INFO);
 
 		call_proper_(validated_name);
 	}
