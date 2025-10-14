@@ -1,0 +1,128 @@
+#pragma once
+
+#include <string>
+#include <vector>
+#include <condition_variable>
+#include <thread>
+#include "Common/ServiceCtrlC.h"
+#include "WChildFrame.h"
+#include "ServiceMsg.h"
+
+namespace eg::ad3
+{
+	class WMsg :
+		public WChildFrame
+	{
+	public:
+		WMsg(wxMDIParentFrame* parent) :
+			WChildFrame
+			(
+				WChildProp
+				{
+					.parent = parent,
+					.title = "Notification Messages",
+					.pos = wxDefaultPosition,
+					.size = wxSize(400, 400),
+					.style = wxDEFAULT_FRAME_STYLE & ~(wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxSYSTEM_MENU),
+					.form_columns = 2,
+					.has_tree = false
+				}
+			),
+			has_update_(false),
+			signal_exit_(false)
+
+		{
+			lts_.emplace_back(register_text_msg("title1", "msg1", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title2", "msg2", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title3", "msg3", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title4", "msg4", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title5", "msg5", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title6", "msg6", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title7", "msg7", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title8", "msg8", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title9", "msg9", "", "", wxDefaultPosition, wxDefaultSize));
+			lts_.emplace_back(register_text_msg("title10", "msg10", "", "", wxDefaultPosition, wxDefaultSize));
+
+			ServiceMsg::instance().reg_monitor("wmsg", &cv_, [this]
+				{
+					std::lock_guard lock(mutex_);
+					has_update_ = true;
+				});
+
+			//update();
+
+			updater_thread_ = std::thread([this]
+				{
+					do
+					{
+						std::unique_lock lock(mutex_);
+						cv_.wait(lock, [&]
+							{
+								return signal_exit_ or has_update_;
+							});
+
+						if (signal_exit_)
+						{
+							break;
+						}
+
+						this->update();
+						has_update_ = false;
+					} while (true);
+				});
+
+			//std::this_thread::sleep_for(std::chrono::seconds(2));
+			//ServiceMsg::instance().log("Hello Whatever", "This is a sample message .....", eg::ad3::ServiceData::Type::INFO);
+
+			Show(true);
+		}
+
+		~WMsg()
+		{
+			//LOG_II("WMsg::~WMsg");
+
+			{
+				std::lock_guard lock(mutex_);
+				signal_exit_ = true;
+			}
+
+			cv_.notify_all();
+
+			ServiceMsg::instance().unreg_monitor("wmsg");
+			updater_thread_.join();
+			//LOG_II("WMsg::~WMsg() Existing Service...");
+		}
+
+		void update()
+		{
+			auto msgs = ServiceMsg::instance().get_msgs();
+
+			for (size_t i = 0; auto& msg : msgs)
+			{
+				if (i < lts_.size())
+				{
+					lts_.at(i).label->SetLabel(msg.title);
+					lts_.at(i).text->SetLabel(msg.msg);
+				}
+				else
+				{
+					break;
+				}
+
+				++i;
+			}
+
+			panel->Refresh(true);
+			panel->Update();
+		}
+
+	private:
+
+		std::mutex mutex_;
+		std::condition_variable cv_;
+		std::vector<LabelText> lts_;
+		std::thread updater_thread_;
+		volatile bool has_update_;
+		volatile bool signal_exit_;
+	};
+}

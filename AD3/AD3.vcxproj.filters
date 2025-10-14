@@ -122,6 +122,9 @@
     <ClInclude Include="ServiceMsg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WMsg.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="AD3.rc">

@@ -29,6 +29,11 @@ namespace eg::ad3
 		if (instance_ not_eq nullptr)
 		{
 			//instance_->account.shutdown();
+			if (instance_->pool_ not_eq nullptr)
+			{
+				pj_pool_release(instance_->pool_);
+				instance_->pool_ = nullptr;
+			}
 		}
 	}
 }

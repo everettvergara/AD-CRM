@@ -34,6 +34,11 @@ namespace eg::ad3
 	{
 	}
 
+	ServicePJAccount::~ServicePJAccount()
+	{
+		shutdown();
+	}
+
 	void ServicePJAccount::init()
 	{
 		LOG_II("ServicePJAccount::init:");

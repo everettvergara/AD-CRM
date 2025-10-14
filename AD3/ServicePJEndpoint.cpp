@@ -78,6 +78,11 @@ namespace eg::ad3
 		LOG_II("ServicePJEndpoint::ServicePJEndpoint: Lib Started");
 	}
 
+	ServicePJEndpoint::~ServicePJEndpoint()
+	{
+		shutdown();
+	}
+
 	void ServicePJEndpoint::init()
 	{
 		LOG_II("ServicePJEndpoint::init:");

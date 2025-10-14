@@ -21,6 +21,12 @@ namespace eg::ad3
 		bool has_tree = false;
 	};
 
+	struct LabelText
+	{
+		wxStaticText* label;
+		wxStaticText* text;
+	};
+
 	class WChildFrame :
 		public wxMDIChildFrame
 	{
@@ -44,6 +50,7 @@ namespace eg::ad3
 			return dynamic_cast<T*>(controls_.at(code));
 		}
 
+		LabelText register_text_msg(const std::string& code1, const std::string& code2, const wxString& label, const wxString& def = "", const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
 		wxStaticText* register_text(const wxString& text, int wrap, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
 		wxTreeCtrl* register_tree(const std::string& code, int width, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxTR_DEFAULT_STYLE | wxTR_HAS_BUTTONS | wxTR_LINES_AT_ROOT);
 		wxChoice* register_dropdown(const std::string& code, const wxString& label, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);

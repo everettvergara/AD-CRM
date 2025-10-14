@@ -176,6 +176,7 @@
     <ClInclude Include="WMDIParentFrame.h" />
     <ClInclude Include="WMDIParentFrameAD3.hpp" />
     <ClInclude Include="WConfigSettings.hpp" />
+    <ClInclude Include="WMsg.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="AD3.rc" />

@@ -18,6 +18,7 @@ namespace eg::ad3
 		pj::Endpoint ep;
 		std::vector<pj::TransportId> transport_ids;
 
+		~ServicePJEndpoint();
 		static void init();
 		static void shutdown();
 		static ServicePJEndpoint& instance();

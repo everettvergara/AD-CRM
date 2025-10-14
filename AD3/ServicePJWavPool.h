@@ -23,11 +23,7 @@ namespace eg::ad3
 
 		~ServicePJWavPool()
 		{
-			if (pool_ not_eq nullptr)
-			{
-				pj_pool_release(pool_);
-				pool_ = nullptr;
-			}
+			shutdown();
 		}
 
 		void play_wav(const std::string& filename)

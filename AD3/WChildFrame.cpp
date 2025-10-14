@@ -92,6 +92,24 @@ namespace eg::ad3
 		controls_[code] = input_control;
 		return input_control;
 	}
+
+	LabelText WChildFrame::register_text_msg(const std::string& code1, const std::string& code2, const wxString& label, const wxString& def, const wxPoint& pos, const wxSize& size, long style)
+	{
+		assert(not controls_.contains(code1));
+		assert(not controls_.contains(code2));
+
+		auto* label_control = new wxStaticText(panel, wxID_ANY, label);
+		auto* text_control = new wxStaticText(panel, wxID_ANY, def, pos, size, style);
+
+		sizer_fields->Add(label_control, 0, wxALIGN_CENTER_VERTICAL);
+		sizer_fields->Add(text_control, 1, wxEXPAND);
+
+		controls_[code1] = label_control;
+		controls_[code2] = text_control;
+
+		return LabelText{ .label = label_control, .text = text_control };
+	}
+
 	wxStaticText* WChildFrame::register_text(const wxString& text, int wrap, const wxPoint& pos, const wxSize& size, long style)
 	{
 		//assert(not controls_.contains(code));

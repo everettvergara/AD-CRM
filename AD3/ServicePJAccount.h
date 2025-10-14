@@ -18,6 +18,7 @@ namespace eg::ad3
 
 		std::vector<std::unique_ptr<PJAccount>> accounts;
 
+		~ServicePJAccount();
 		static void init();
 		static ServicePJAccount& instance();
 		static void shutdown();

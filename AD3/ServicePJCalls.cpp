@@ -8,6 +8,11 @@
 
 namespace eg::ad3
 {
+	ServicePJCalls::~ServicePJCalls()
+	{
+		shutdown();
+	}
+
 	void ServicePJCalls::init()
 	{
 		LOG_II("ServicePJCalls::init:");

@@ -4,13 +4,15 @@
 
 #include "WConfigSettings.hpp"
 #include "WDialer.h"
-//#include "WDialer2.h"
 #include "resource.h"
 #include "ServicePJAccount.h"
 #include "ConfigSettings.hpp"
+#include "WMsg.hpp"
 
 namespace eg::ad3
 {
+	constexpr const auto k_msg_window_id = "wmsg";
+
 	class WMDIParentFrameAD3 final :
 		public WMDIParentFrame
 	{
@@ -29,12 +31,12 @@ namespace eg::ad3
 			register_sub_menu(file_menu, next_menu_id(), "Close", &WMDIParentFrameAD3::on_file_close, this);
 
 			auto* call_menu = new wxMenu();
-			register_sub_menu(call_menu, next_menu_id(), "Dialer - 1", &WMDIParentFrameAD3::on_call_dialer1, this);
-			register_sub_menu(call_menu, next_menu_id(), "Dialer - 2", &WMDIParentFrameAD3::on_call_dialer2, this);
-			register_sub_menu(call_menu, next_menu_id(), "Dialer - 3", &WMDIParentFrameAD3::on_call_dialer3, this);
-			register_sub_menu(call_menu, next_menu_id(), "Dialer - 4", &WMDIParentFrameAD3::on_call_dialer4, this);
-			register_sub_menu(call_menu, next_menu_id(), "Dialer - 5", &WMDIParentFrameAD3::on_call_dialer5, this);
-			register_sub_menu(call_menu, next_menu_id(), "Dialer - 6", &WMDIParentFrameAD3::on_call_dialer6, this);
+			register_sub_menu(call_menu, next_menu_id(), "Dialer - A", &WMDIParentFrameAD3::on_call_dialer1, this);
+			register_sub_menu(call_menu, next_menu_id(), "Dialer - B", &WMDIParentFrameAD3::on_call_dialer2, this);
+			register_sub_menu(call_menu, next_menu_id(), "Dialer - C", &WMDIParentFrameAD3::on_call_dialer3, this);
+			register_sub_menu(call_menu, next_menu_id(), "Dialer - D", &WMDIParentFrameAD3::on_call_dialer4, this);
+			register_sub_menu(call_menu, next_menu_id(), "Dialer - E", &WMDIParentFrameAD3::on_call_dialer5, this);
+			register_sub_menu(call_menu, next_menu_id(), "Dialer - F", &WMDIParentFrameAD3::on_call_dialer6, this);
 
 			//register_sub_menu(call_menu, next_menu_id(), "Auto dial", &WMDIParentFrameAD3::on_call_auto_dial, this);
 
@@ -55,6 +57,13 @@ namespace eg::ad3
 		void on_call_dialer1(wxCommandEvent&)
 		{
 			static constexpr auto id = "dialer1";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
 			if (not is_child_active(id))
 			{
 				auto ix = 0 % ConfigSettings::instance().max_ep();
@@ -69,6 +78,13 @@ namespace eg::ad3
 		void on_call_dialer2(wxCommandEvent&)
 		{
 			static constexpr auto id = "dialer2";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
 			if (not is_child_active(id))
 			{
 				auto ix = 1 % ConfigSettings::instance().max_ep();
@@ -84,6 +100,13 @@ namespace eg::ad3
 		void on_call_dialer3(wxCommandEvent&)
 		{
 			static constexpr auto id = "dialer3";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
 			if (not is_child_active(id))
 			{
 				auto ix = 2 % ConfigSettings::instance().max_ep();
@@ -99,6 +122,13 @@ namespace eg::ad3
 		void on_call_dialer4(wxCommandEvent&)
 		{
 			static constexpr auto id = "dialer4";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
 			if (not is_child_active(id))
 			{
 				auto ix = 3 % ConfigSettings::instance().max_ep();
@@ -114,6 +144,13 @@ namespace eg::ad3
 		void on_call_dialer5(wxCommandEvent&)
 		{
 			static constexpr auto id = "dialer5";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
 			if (not is_child_active(id))
 			{
 				auto ix = 4 % ConfigSettings::instance().max_ep();
@@ -127,6 +164,13 @@ namespace eg::ad3
 		void on_call_dialer6(wxCommandEvent&)
 		{
 			static constexpr auto id = "dialer6";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
 			if (not is_child_active(id))
 			{
 				auto ix = 5 % ConfigSettings::instance().max_ep();

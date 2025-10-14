@@ -14,7 +14,8 @@
 #include "ServicePJAccount.h"
 #include "ServicePJCalls.h"
 #include "ConfigSettings.hpp"
-#include "ServicePJCalls.h"
+#include "ServiceMsg.h"
+
 // TODO: to call count not reset when client, campaign, prio changed
 // todo: - should not be able to make another call if there's an ongoing call
 namespace eg::ad3
@@ -55,6 +56,8 @@ namespace eg::ad3
 		on_init_buttons_();
 		update_components_state_();
 		this->Bind(wxEVT_CLOSE_WINDOW, &WDialer::on_win_close_, this);
+
+		ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::string(title) + " - Ready to Call...", eg::ad3::ServiceData::Type::INFO);
 
 		Show(true);
 	}
@@ -693,8 +696,7 @@ namespace eg::ad3
 
 							if (not conn.connected())
 							{
-								wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
-
+								ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
 								return;
 							}
 
@@ -758,7 +760,8 @@ namespace eg::ad3
 
 							if (not conn.connected())
 							{
-								wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
+								ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
+
 								return;
 							}
 
@@ -797,7 +800,7 @@ namespace eg::ad3
 					if (not filter_.is_auto)
 					{
 						update_components_state_();
-						// wxMessageBox("Call ended", this->GetTitle(), wxOK | wxICON_INFORMATION);
+						ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Call Ended", eg::ad3::ServiceData::Type::INFO);
 					}
 					else
 					{
@@ -810,7 +813,7 @@ namespace eg::ad3
 							// wait for the user to update the contract master first.
 							if (data_.has_confirmed_status())
 							{
-								// wxMessageBox("Press Call once you are done updating the contract master.", "Info", wxOK | wxICON_INFORMATION);
+								ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Press Call once you are done updating the contract master.", eg::ad3::ServiceData::Type::INFO);
 							}
 
 							// Otherwise proceed to the next call.
@@ -850,7 +853,8 @@ namespace eg::ad3
 	{
 		if (filter_.selected_status->to_call_count() == 0)
 		{
-			//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::INFO);
+
 			return;
 		}
 
@@ -866,7 +870,8 @@ namespace eg::ad3
 
 		if (not conn.connected())
 		{
-			//wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
+
 			return;
 		}
 
@@ -888,6 +893,8 @@ namespace eg::ad3
 					filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
 
 					//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+					ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::ERR);
+
 					update_components_from_data_();
 
 					return;
@@ -934,6 +941,8 @@ namespace eg::ad3
 		else
 		{
 			//wxMessageBox("No record retrieved.", this->GetTitle(), wxOK | wxICON_ERROR, this);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No record retrieved.", eg::ad3::ServiceData::Type::WARNING);
+
 			return;
 		}
 
@@ -946,14 +955,18 @@ namespace eg::ad3
 	{
 		if (auto err = update_data_from_components_(); err not_eq nullptr)
 		{
-			wxMessageBox(err, this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			//wxMessageBox(err, this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), err, eg::ad3::ServiceData::Type::ERR);
+
 			return;
 		}
 
 		const auto validated_name = DialerData::trimmed_name(data_.name);
 		if (validated_name.empty())
 		{
-			wxMessageBox("Invalid name.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			//wxMessageBox("Invalid name.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Invalid name.", eg::ad3::ServiceData::Type::ERR);
+
 			return;
 		}
 
@@ -969,6 +982,8 @@ namespace eg::ad3
 			if (current_call_ >= 0)
 			{
 				//wxMessageBox("There is already an ongoing call.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "There is already an ongoing call.", eg::ad3::ServiceData::Type::ERR);
+
 				return;
 			}
 
@@ -988,6 +1003,8 @@ namespace eg::ad3
 			if (current_call_ < 0)
 			{
 				//wxMessageBox("Could not make the call until active call is stopped.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Could not make the call until active call is stopped.", eg::ad3::ServiceData::Type::ERR);
+
 				current_call_ = -1;
 				return;
 			}
@@ -1083,13 +1100,15 @@ namespace eg::ad3
 
 		if (const auto err = update_data_from_components_(); err not_eq nullptr)
 		{
-			wxMessageBox(err, this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), err, eg::ad3::ServiceData::Type::ERR);
+
 			return;
 		}
 
 		if (data_.time_call_ended.empty())
 		{
-			wxMessageBox("Cannot save a record that has not been called.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Cannot save a record that has not been called.", eg::ad3::ServiceData::Type::ERR);
+
 			return;
 		}
 
@@ -1097,7 +1116,7 @@ namespace eg::ad3
 
 		update_components_state_();
 
-		//wxMessageBox("Call record saved", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+		ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Call record saved", eg::ad3::ServiceData::Type::INFO);
 	}
 
 	void WDialer::save_()
@@ -1108,7 +1127,7 @@ namespace eg::ad3
 		{
 			if (not std::filesystem::create_directories(path))
 			{
-				wxMessageBox("Could not create the directory to save the file.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Could not create the directory to save the file.", eg::ad3::ServiceData::Type::ERR);
 				return;
 			}
 		}
@@ -1209,17 +1228,14 @@ namespace eg::ad3
 	{
 		if (current_call_ >= 0)
 		{
-			//wxMessageBox("There's an ongoing call. Stop / End the call first.", this->GetTitle());
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "There's an ongoing call. Stop / End the call first.", eg::ad3::ServiceData::Type::ERR);
 			event.Veto();
 			return;
 		}
 
 		if (data_.state == DialerState::JustEnded)
 		{
-			//if (wxMessageBox("Do you want to save record before closing the window?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
-			//{
 			save_();
-			//}
 		}
 
 		Destroy();
@@ -1229,27 +1245,18 @@ namespace eg::ad3
 	{
 		if (current_call_ >= 0)
 		{
-			//wxMessageBox("There's an ongoing call. Stop / End the call first.", this->GetTitle());
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "There's an ongoing call. Stop / End the call first.", eg::ad3::ServiceData::Type::ERR);
+
 			return;
 		}
 
 		if (data_.state == DialerState::JustEnded)
 		{
-			//if (wxMessageBox("Do you want to save record before closing the window?", this->GetTitle(), wxYES_NO | wxYES_DEFAULT | wxICON_QUESTION) == wxYES)
-			//{
 			save_();
-			//}
 		}
 
 		Close(true);
 	}
-
-	//static pj_status_t on_wav_eof(pjmedia_port* /*port*/, void* user_data)
-	//{
-	//	auto finished = static_cast<bool*>(user_data);
-	//	*finished = true;
-	//	return PJ_SUCCESS; // you MUST return pj_status_t
-	//}
 
 	void WDialer::on_playback_(wxCommandEvent&)
 	{
@@ -1265,11 +1272,12 @@ namespace eg::ad3
 			update_components_state_();
 			if (not result)
 			{
-				//wxMessageBox("Cannot play recording when there's an active call.", this->GetTitle());
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Cannot play recording when there's an active call.", eg::ad3::ServiceData::Type::ERR);
+
 				return;
 			}
 
-			//wxMessageBox("Recording played successfully.", this->GetTitle());
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Recording played successfully.", eg::ad3::ServiceData::Type::INFO);
 			});
 	}
 
@@ -1277,7 +1285,8 @@ namespace eg::ad3
 	{
 		if (data_.id == 0 or data_.collector_id == 0)
 		{
-			//wxMessageBox("No CM associated with this call", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No CM associated with this call", eg::ad3::ServiceData::Type::ERR);
+
 			return;
 		}
 
@@ -1303,7 +1312,8 @@ namespace eg::ad3
 
 			if (not conn.connected())
 			{
-				wxMessageBox(std::format("Could not connect to database: {}", db_conn), this->GetTitle(), wxOK | wxICON_ERROR, this);
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
+
 				Close(true);
 				return;
 			}
