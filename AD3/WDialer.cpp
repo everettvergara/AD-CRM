@@ -928,7 +928,9 @@ namespace eg::ad3
 		// Redial
 		else
 		{
-			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Redialing {} {} {}", data_.ucode, data_.name, data_.mobile), eg::ad3::ServiceData::Type::INFO);
+			data_.redial = redial;
+
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Redialing {} {} {} {}", data_.ucode, data_.name, data_.mobile, data_.redial), eg::ad3::ServiceData::Type::INFO);
 
 			const auto validated_name = DialerData::trimmed_name(data_.name);
 			call_proper_(validated_name);

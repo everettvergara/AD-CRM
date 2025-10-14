@@ -18,7 +18,7 @@ namespace eg::ad3
 					.parent = parent,
 					.title = "AD3.20251010.1 Settings",
 					.pos = wxDefaultPosition,
-					.size = wxSize(400, 600),
+					.size = wxSize(400, 700),
 					.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
 					.form_columns = 2,
 					.has_tree = false

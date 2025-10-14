@@ -23,7 +23,7 @@ namespace eg::ad3
 					.parent = parent,
 					.title = "Notification Messages",
 					.pos = wxDefaultPosition,
-					.size = wxSize(500, 700),
+					.size = wxSize(560, 700),
 					.style = (wxDEFAULT_FRAME_STYLE & ~(wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxSYSTEM_MENU)) | wxSTAY_ON_TOP,
 					.form_columns = 2,
 					.has_tree = false
