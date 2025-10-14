@@ -36,6 +36,7 @@ namespace eg::ad3
 			//register_text_input("sip_password2", "SIP Password2:", settings.sip_password2);
 			register_text_input("concurrent_calls", "Concurrent calls:", std::to_string(settings.concurrent_calls));
 			register_text_input("max_calls", "Max calls:", std::to_string(settings.max_calls));
+			register_text_input("redial", "Dial/Redial:", std::to_string(settings.redial));
 
 			register_text_input("max_registration_attempts", "Max account registration attempts:", std::to_string(settings.max_registration_attempts));
 			register_text_input("server_timeout_secs", "Server timeout (secs):", std::to_string(settings.server_timeout_secs));
@@ -69,6 +70,7 @@ namespace eg::ad3
 			//auto sip_password2 = get<wxTextCtrl>("sip_password2")->GetValue();
 			auto concurrent_calls = get<wxTextCtrl>("concurrent_calls")->GetValue();
 			auto max_calls = get<wxTextCtrl>("max_calls")->GetValue();
+			auto redial = get<wxTextCtrl>("redial")->GetValue();
 
 			auto max_registration_attempts = get<wxTextCtrl>("max_registration_attempts")->GetValue();
 			auto server_timeout_secs = get<wxTextCtrl>("server_timeout_secs")->GetValue();
@@ -101,6 +103,8 @@ namespace eg::ad3
 			//if (sip_password2.IsEmpty()) return "Password2 is empty";
 
 			if (concurrent_calls.IsEmpty()) return "Concurrent calls is empty";
+			if (redial.IsEmpty()) return "Dial / Redial is empty. Must be >= 1.";
+
 			if (max_registration_attempts.IsEmpty()) return "Max registration attempts is empty";
 			if (server_timeout_secs.IsEmpty()) return "Server timeout is empty";
 			if (server_keep_alive_secs.IsEmpty()) return "Keep alive secs is empty";
@@ -119,6 +123,7 @@ namespace eg::ad3
 			settings.concurrent_calls = std::stoull(concurrent_calls.ToStdString());
 			settings.max_calls = std::stoull(max_calls.ToStdString());
 			settings.max_registration_attempts = std::stoull(max_registration_attempts.ToStdString());
+			settings.redial = std::stoull(redial.ToStdString());
 			settings.server_timeout_secs = std::stoul(server_timeout_secs.ToStdString());
 			settings.server_keep_alive_secs = std::stoul(server_keep_alive_secs.ToStdString());
 			settings.server_keep_alive_data = server_keep_alive_data.ToStdString();
