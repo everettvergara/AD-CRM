@@ -56,8 +56,16 @@ namespace eg::ad3
 
 			ServiceMsg::instance().reg_monitor("wmsg", &cv_, [this]
 				{
-					std::lock_guard lock(mutex_);
-					has_update_ = true;
+					{
+						std::lock_guard lock(mutex_);
+						has_update_ = true;
+					}
+
+					wxTheApp->CallAfter([this]() {
+						Raise();        // bring window to front
+						//RequestUserAttention(); // flash taskbar if not focused
+						//SetFocus();     // keyboard focus to the frame
+						});
 				});
 
 			//update();
@@ -72,6 +80,7 @@ namespace eg::ad3
 								return signal_exit_ or has_update_;
 							});
 
+						lock.unlock();
 						if (signal_exit_)
 						{
 							break;
@@ -118,6 +127,10 @@ namespace eg::ad3
 
 					switch (msg.type)
 					{
+					case ServiceData::Type::ATTENTION:
+						lts_.at(i).label->SetForegroundColour(*wxRED);
+						lts_.at(i).text->SetForegroundColour(*wxRED);
+						break;
 					case ServiceData::Type::ERR:
 						lts_.at(i).label->SetForegroundColour(*wxRED);
 						lts_.at(i).text->SetForegroundColour(*wxRED);
@@ -154,7 +167,7 @@ namespace eg::ad3
 		std::condition_variable cv_;
 		std::vector<LabelText> lts_;
 		std::thread updater_thread_;
-		volatile bool has_update_;
-		volatile bool signal_exit_;
+		bool has_update_;
+		bool signal_exit_;
 	};
 }

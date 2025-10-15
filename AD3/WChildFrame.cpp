@@ -166,8 +166,8 @@ namespace eg::ad3
 
 	wxButton* WChildFrame::register_button_field(const wxString& label, int id)
 	{
-		auto* label_control = new wxStaticText(panel, wxID_ANY, "");
-		sizer_fields->Add(label_control, 0, wxALIGN_CENTER_VERTICAL);
+		//auto* label_control = new wxStaticText(panel, wxID_ANY, "");
+		//sizer_fields->Add(label_control, 0, wxALIGN_CENTER_VERTICAL);
 
 		auto* button = new wxButton(panel, wxID_ANY, label);
 		sizer_fields->Add(button, 0, wxALL, k_border);

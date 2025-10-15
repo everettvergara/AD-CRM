@@ -37,14 +37,14 @@ namespace eg::ad3
 		wxChoice* filter_status_;
 		wxTextCtrl* filter_to_call_count_;
 
-		wxTextCtrl* id_;
-		wxTextCtrl* ucode_;
+		//wxTextCtrl* id_;
+		//wxTextCtrl* ucode_;
 		wxTextCtrl* mobile_;
 		wxTextCtrl* name_;
 		wxTextCtrl* status_;
-		wxTextCtrl* time_of_call_;
-		wxTextCtrl* time_call_ended_;
-		wxTextCtrl* file_recording_;
+		//wxTextCtrl* time_of_call_;
+		//wxTextCtrl* time_call_ended_;
+		//wxTextCtrl* file_recording_;
 		wxTextCtrl* remarks_;
 		wxButton* new_button_;
 		wxButton* call_button_;

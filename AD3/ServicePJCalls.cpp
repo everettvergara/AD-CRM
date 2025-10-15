@@ -78,6 +78,8 @@ namespace eg::ad3
 		current_call->makeCall(std::format("sip:{}@{}", mobile, ConfigSettings::instance().server_ip), []
 			{
 				pj::CallOpParam p(true);
+				//p.opt.audioCount = 1;
+				//p.opt.videoCount = 0;
 				p.opt.audioCount = 1;
 				p.opt.videoCount = 0;
 				return p;

@@ -18,7 +18,7 @@ namespace eg::ad3
 	{
 		std::string title;
 		std::string msg;
-		enum struct Type { INFO, WARNING, ERR, CRITICAL } type;
+		enum struct Type { INFO, WARNING, ERR, CRITICAL, ATTENTION } type;
 		std::chrono::time_point<std::chrono::system_clock> tp;
 
 		ServiceData(std::string title, std::string msg, ServiceData::Type type);

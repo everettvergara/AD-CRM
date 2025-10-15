@@ -154,7 +154,6 @@ namespace eg::ad3
 			call_confirmed = 0;
 			call_ended = 0;
 
-			redial = ConfigSettings::instance().redial;
 			state = DialerState::New;
 		}
 
@@ -171,7 +170,6 @@ namespace eg::ad3
 			file_recording = data.value("file_recording", "");
 			collector_id = data.value("collector_id", 0);
 			uploader_contact_id = data.value("uploader_contact_id", 0);
-			redial = ConfigSettings::instance().redial;
 			state = DialerState::Saved;
 		}
 
@@ -237,7 +235,6 @@ namespace eg::ad3
 			data["file_recording"] = file_recording;
 			data["collector_id"] = collector_id;
 			data["uploader_contact_id"] = uploader_contact_id;
-			data["redial"] = redial;
 
 			return data;
 		}

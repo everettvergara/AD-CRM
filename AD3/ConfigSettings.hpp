@@ -31,13 +31,14 @@ namespace eg::ad3
 		std::string server_keep_alive_data;
 		bool register_on_add;
 		bool mock;
-
+		bool is_admin;
 		std::string db_driver;
 		std::string db_server;
 		std::string db_database;
 		std::string db_user;
 		std::string db_password;
 		std::string fycrm_path;
+		std::string playback_central_path;
 
 		size_t redial = 0;
 
@@ -85,6 +86,7 @@ namespace eg::ad3
 				{"server_port", server_port},
 				//{"sip_id", sip_id},
 				//{"sip_password", sip_password},
+				{"is_admin", is_admin},
 				{"sip_accounts", sip_accounts},
 				{"concurrent_calls", concurrent_calls},
 				{"max_calls", max_calls},
@@ -100,7 +102,8 @@ namespace eg::ad3
 				{"db_user", db_user},
 				{"db_password", db_password},
 				{"fycrm_path", fycrm_path},
-				{"redial", redial}
+				{"redial", redial},
+				{"playback_central_path", playback_central_path}
 			};
 		}
 
@@ -141,13 +144,15 @@ namespace eg::ad3
 			server_keep_alive_data(data.value("server_keep_alive_data", R"(\r\n)")),
 			register_on_add(data.value("register_on_add", false)),
 			mock(data.value("mock", true)),
+			is_admin(data.value("is_admin", false)),
 			db_driver(data.value("db_driver", "{SQL Server Native Client 11.0}")),
 			db_server(data.value("db_server", "WIN-0BL4BGRJARA")),
 			db_database(data.value("db_database", "wmc")),
 			db_user(data.value("db_user", "sa")),
 			db_password(data.value("db_password", "Kerberos2014!")),
 			fycrm_path(data.value("fycrm_path", "c:/fy-crm/crm_dialer.exe")),
-			redial(data.value("redial", 1))
+			redial(data.value("redial", 1)),
+			playback_central_path(data.value("playback_central_path", ""))
 		{
 		}
 	};

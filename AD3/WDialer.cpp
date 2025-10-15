@@ -28,14 +28,14 @@ namespace eg::ad3
 				.parent = parent,
 				.title = title,
 				.pos = wxDefaultPosition,
-				.size = wxSize(800, 800),
+				.size = wxSize(600, 450),
 				.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
 				.form_columns = 2,
 				.has_tree = true
 			}),
 		tree_(nullptr),
-		id_(nullptr),
-		ucode_(nullptr),
+		//id_(nullptr),
+		//ucode_(nullptr),
 		mobile_(nullptr),
 		status_(nullptr),
 		new_button_(nullptr),
@@ -74,22 +74,22 @@ namespace eg::ad3
 			filter_to_call_count_->ChangeValue("0");
 		}
 
-		id_->ChangeValue(std::to_string(data_.id));
-		ucode_->ChangeValue(data_.ucode);
+		//id_->ChangeValue(std::to_string(data_.id));
+		//ucode_->ChangeValue(data_.ucode);
 		mobile_->ChangeValue(data_.mobile);
 		name_->ChangeValue(data_.name);
 		status_->ChangeValue(data_.status);
-		time_of_call_->ChangeValue(data_.time_of_call);
-		time_call_ended_->ChangeValue(data_.time_call_ended);
+		//time_of_call_->ChangeValue(data_.time_of_call);
+		//time_call_ended_->ChangeValue(data_.time_call_ended);
 		remarks_->ChangeValue(data_.remarks);
 
 		if (data_.has_confirmed_status())
 		{
-			file_recording_->ChangeValue(data_.file_recording);
+			//file_recording_->ChangeValue(data_.file_recording);
 		}
 		else
 		{
-			file_recording_->ChangeValue("");
+			//file_recording_->ChangeValue("");
 		}
 
 		wxTheApp->CallAfter([this]
@@ -130,8 +130,8 @@ namespace eg::ad3
 				remarks_->Disable();
 			}
 
-			id_->Disable();
-			ucode_->Disable();
+			//id_->Disable();
+			//ucode_->Disable();
 			tree_->Enable();
 
 			playback_button_->Disable();
@@ -153,8 +153,8 @@ namespace eg::ad3
 			filter_prio_->Disable();
 			filter_status_->Disable();
 
-			id_->Disable();
-			ucode_->Disable();
+			//id_->Disable();
+			//ucode_->Disable();
 			mobile_->Disable();
 			name_->Disable();
 			if (not filter_.is_auto)
@@ -186,8 +186,8 @@ namespace eg::ad3
 			filter_prio_->Disable();
 			filter_status_->Disable();
 
-			id_->Disable();
-			ucode_->Disable();
+			//id_->Disable();
+			//ucode_->Disable();
 			mobile_->Disable();
 			name_->Disable();
 			if (not filter_.is_auto)
@@ -235,14 +235,22 @@ namespace eg::ad3
 				call_again_button_->Disable();
 			}
 
-			id_->Disable();
-			ucode_->Disable();
+			//id_->Disable();
+			//ucode_->Disable();
 			mobile_->Disable();
 			name_->Disable();
 
 			tree_->Enable();
 
-			playback_button_->Enable(data_.has_confirmed_status());
+			if (ConfigSettings::instance().is_admin)
+			{
+				playback_button_->Enable(data_.has_confirmed_status());
+			}
+			else
+			{
+				playback_button_->Disable();
+			}
+
 			if (data_.id > 0 and data_.collector_id > 0)
 			{
 				cm_button_->Enable();
@@ -266,8 +274,8 @@ namespace eg::ad3
 			filter_prio_->Disable();
 			filter_status_->Disable();
 
-			id_->Disable();
-			ucode_->Disable();
+			//id_->Disable();
+			//ucode_->Disable();
 			mobile_->Disable();
 			name_->Disable();
 			remarks_->Disable();
@@ -302,14 +310,22 @@ namespace eg::ad3
 				filter_status_->Enable();
 			}
 
-			id_->Disable();
-			ucode_->Disable();
+			//id_->Disable();
+			//ucode_->Disable();
 			mobile_->Disable();
 			name_->Disable();
 			remarks_->Disable();
 			tree_->Enable();
 
-			playback_button_->Enable(data_.has_confirmed_status());
+			if (ConfigSettings::instance().is_admin)
+			{
+				playback_button_->Enable(data_.has_confirmed_status());
+			}
+			else
+			{
+				playback_button_->Disable();
+			}
+
 			if (data_.id > 0 and data_.collector_id > 0)
 			{
 				cm_button_->Enable();
@@ -349,7 +365,7 @@ namespace eg::ad3
 			}
 		}
 
-		tree_ = register_tree("history", 400);
+		tree_ = register_tree("history", 300);
 
 		tree_->Bind(wxEVT_TREE_SEL_CHANGED, [this](wxTreeEvent& e)
 			{
@@ -429,7 +445,7 @@ namespace eg::ad3
 					filter_status_->Clear();
 					filter_to_call_count_->SetValue("0");
 					data_.ucode = "";
-					ucode_->SetValue("");
+					//ucode_->SetValue("");
 				}
 
 				update_components_state_();
@@ -465,7 +481,7 @@ namespace eg::ad3
 				data_.clear();
 				filter_to_call_count_->ChangeValue("0");
 				data_.ucode = "";
-				ucode_->ChangeValue("");
+				//ucode_->ChangeValue("");
 				wxTheApp->CallAfter([this]
 					{
 						panel->Layout();
@@ -500,7 +516,7 @@ namespace eg::ad3
 				data_.clear();
 				filter_to_call_count_->ChangeValue("0");
 				data_.ucode = "";
-				ucode_->ChangeValue("");
+				//ucode_->ChangeValue("");
 				wxTheApp->CallAfter([this]
 					{
 						panel->Layout();
@@ -532,7 +548,7 @@ namespace eg::ad3
 				data_.clear();
 				filter_to_call_count_->ChangeValue("0");
 				data_.ucode = "";
-				ucode_->ChangeValue("");
+				//ucode_->ChangeValue("");
 				wxTheApp->CallAfter([this]
 					{
 						panel->Layout();
@@ -567,20 +583,20 @@ namespace eg::ad3
 	void WDialer::on_init_input_controls_()
 	{
 		// Fields
-		register_text("Call details", 300);
-		id_ = register_text_input("id", "CM ID:", std::to_string(data_.id));
-		ucode_ = register_text_input("ucode", "Code:", data_.ucode);
-		register_text("Please input mobile in the following format: 0XXXYYYZZZZ i.e. 09177101995.", 300);
+		//register_text("Call details", 300);
+		//id_ = register_text_input("id", "CM ID:", std::to_string(data_.id));
+		//ucode_ = register_text_input("ucode", "Code:", data_.ucode);
+		//register_text("Please input mobile in the following format: 0XXXYYYZZZZ i.e. 09177101995.", 300);
 		mobile_ = register_text_input("mobile", "Mobile to dial:", "");
 		mobile_->SetHint("09177101995");
 		name_ = register_text_input("name", "Name:", "");
 		name_->SetHint("Juan dela Cruz");
 		status_ = register_text_input("status", "Last Status:", "PJSIP_INV_STATE_NULL", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-		time_of_call_ = register_text_input("time_of_call", "Time of Call:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-		time_call_ended_ = register_text_input("time_call_ended", "Time Call Ended:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-		remarks_ = register_text_input_multi("remarks", "Remarks:", 5);
+		//time_of_call_ = register_text_input("time_of_call", "Time of Call:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		//time_call_ended_ = register_text_input("time_call_ended", "Time Call Ended:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		remarks_ = register_text_input_multi("remarks", "Remarks:", 1);
 		remarks_->SetHint("Enter details of your conversation here...");
-		file_recording_ = register_text_input("wav_recording", "Playback file:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		//file_recording_ = register_text_input("wav_recording", "Playback file:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 		playback_button_ = register_button_field("Play");
 		playback_button_->Bind(wxEVT_BUTTON, &WDialer::on_playback_, this);
 		cm_button_ = register_button_field("Open CRM");
@@ -632,6 +648,12 @@ namespace eg::ad3
 					//LOG_II("Confirmed call to {}", data_.mobile);
 					data_.status = "PJSIP_INV_STATE_CONFIRMED";
 					ServicePJCalls::instance().hangup_all_calls_except(current_call_);
+					ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("{} Answered the call", data_.name), eg::ad3::ServiceData::Type::ATTENTION);
+
+					wxTheApp->CallAfter([this]()
+						{
+							Raise();        // bring window to front
+						});
 
 					if (data_.uploader_contact_id > 0)
 					{
@@ -755,16 +777,14 @@ namespace eg::ad3
 					auto should_stop_auto = (data_.state == DialerState::Stopping or hangup_requested);
 
 					{
-						//std::lock_guard lock(ServicePJAccount::instance().call_mutex);;
-						//current_call_.reset();
 						current_call_ = -1;
 						data_.time_call_ended = eg::string::datetime_to_formatted_string();
 						data_.state = DialerState::JustEnded;
-						time_call_ended_->SetValue(data_.time_call_ended);
+						//time_call_ended_->SetValue(data_.time_call_ended);
 
 						if (data_.has_confirmed_status())
 						{
-							file_recording_->SetValue(data_.file_recording);
+							//file_recording_->SetValue(data_.file_recording);
 						}
 					}
 
@@ -777,7 +797,6 @@ namespace eg::ad3
 					{
 						save_();
 
-						// If user did not stop the auto dialer...
 						if (not should_stop_auto)
 						{
 							// If the last call was answered...
@@ -790,14 +809,8 @@ namespace eg::ad3
 							// Otherwise proceed to the next call.
 							else
 							{
-								if (data_.redial > 0)
-								{
-									on_call_auto_(data_.redial - 1);
-								}
-								else
-								{
-									on_call_auto_(0);
-								}
+								//ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("{} {}", data_.name, data_.redial), eg::ad3::ServiceData::Type::ERR);
+								on_call_auto_(data_.redial);
 							}
 						}
 
@@ -817,24 +830,37 @@ namespace eg::ad3
 
 	void WDialer::on_call_(wxCommandEvent&)
 	{
+		const auto [in, out] = ServicePJEndpoint::instance().get_in_out_count();
+
+		if (in == 0)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Can't call because NO MIC is detected.", eg::ad3::ServiceData::Type::ERR);
+			return;
+		}
+
+		if (out == 0)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Can't call because NO SPEAKER is detected.", eg::ad3::ServiceData::Type::ERR);
+			return;
+		}
+
 		if (not filter_.is_auto)
 		{
 			on_call_manual_();
 		}
 		else
 		{
-			on_call_auto_(ConfigSettings::instance().redial);
+			on_call_auto_(0);
 		}
 	}
 
 	void WDialer::on_call_auto_(size_t redial)
 	{
-		if (redial == ConfigSettings::instance().redial or redial == 0)
+		if (redial == 0)
 		{
 			if (filter_.selected_status->to_call_count() == 0)
 			{
 				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::INFO);
-
 				return;
 			}
 
@@ -851,7 +877,6 @@ namespace eg::ad3
 			if (not conn.connected())
 			{
 				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
-
 				return;
 			}
 
@@ -873,10 +898,9 @@ namespace eg::ad3
 						filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
 
 						//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
-						ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::ERR);
+						ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::WARNING);
 
 						update_components_from_data_();
-
 						return;
 					}
 					else
@@ -893,6 +917,7 @@ namespace eg::ad3
 				NANODBC_TEXT(retrieve_sql));
 
 			data_.clear();
+
 			if (results.next())
 			{
 				data_.id = results.get<size_t>(0);
@@ -909,7 +934,7 @@ namespace eg::ad3
 					data_.redial = data_.redial - 1;
 				}
 
-				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Dialing {} {} {}", data_.ucode, data_.name, data_.mobile), eg::ad3::ServiceData::Type::INFO);
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Dialing {} {} {} ({})", data_.ucode, data_.name, data_.mobile, data_.redial), eg::ad3::ServiceData::Type::INFO);
 
 				update_components_from_data_();
 			}
@@ -928,9 +953,17 @@ namespace eg::ad3
 		// Redial
 		else
 		{
-			data_.redial = redial;
+			if (redial > 0)
+			{
+				data_.redial = redial - 1;
+			}
+			else
 
-			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Redialing {} {} {} {}", data_.ucode, data_.name, data_.mobile, data_.redial), eg::ad3::ServiceData::Type::INFO);
+			{
+				data_.redial = 0;
+			}
+
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Redialing {} {} {} ({})", data_.ucode, data_.name, data_.mobile, data_.redial), eg::ad3::ServiceData::Type::INFO);
 
 			const auto validated_name = DialerData::trimmed_name(data_.name);
 			call_proper_(validated_name);
@@ -950,7 +983,6 @@ namespace eg::ad3
 		if (validated_name.empty())
 		{
 			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Invalid name.", eg::ad3::ServiceData::Type::ERR);
-
 			return;
 		}
 
@@ -966,7 +998,6 @@ namespace eg::ad3
 			{
 				//wxMessageBox("There is already an ongoing call.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "There is already an ongoing call.", eg::ad3::ServiceData::Type::ERR);
-
 				return;
 			}
 
@@ -992,11 +1023,10 @@ namespace eg::ad3
 				return;
 			}
 		}
-
 		//LOG_II("2");
 
 		data_.time_of_call = eg::string::datetime_to_formatted_string();
-		time_of_call_->ChangeValue(data_.time_of_call);
+		//time_of_call_->ChangeValue(data_.time_of_call);
 		data_.state = DialerState::Calling;
 
 		//LOG_II("3");
@@ -1021,9 +1051,9 @@ namespace eg::ad3
 		data_.time_of_call.clear();
 		data_.time_call_ended.clear();
 		data_.file_recording.clear();
-		time_of_call_->SetValue("");
-		time_call_ended_->SetValue("");
-		file_recording_->SetValue("");
+		//time_of_call_->SetValue("");
+		//time_call_ended_->SetValue("");
+		//file_recording_->SetValue("");
 		//update_components_state_();
 
 		on_call_manual_();
@@ -1070,8 +1100,8 @@ namespace eg::ad3
 		data_.mobile = validated_mobile;
 		data_.name = name;
 		data_.status = status_->GetValue().ToStdString();
-		data_.time_of_call = time_of_call_->GetValue().ToStdString();
-		data_.time_call_ended = time_call_ended_->GetValue().ToStdString();
+		//data_.time_of_call = time_of_call_->GetValue().ToStdString();
+		//data_.time_call_ended = time_call_ended_->GetValue().ToStdString();
 		data_.remarks = remarks_->GetValue().ToStdString();
 
 		return nullptr;
@@ -1122,6 +1152,31 @@ namespace eg::ad3
 		add_item_expand_(yyyy, mm, dd, std::filesystem::path(filename).filename().string());
 
 		update_components_state_();
+
+		// Save recordings to central
+		const auto& config = ConfigSettings::instance();
+
+		if (not config.playback_central_path.empty())
+		{
+			const auto& sip = config.sip_accounts.front().sip_id;
+			std::filesystem::path src(data_.file_recording);
+			std::filesystem::path dest = std::filesystem::path(config.playback_central_path) / config.sip_accounts.front().sip_id / data_.file_recording;
+
+			std::error_code ec;
+			if (not std::filesystem::create_directories(dest.parent_path(), ec))
+			{
+				if (ec)
+				{
+					ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Cannot create directory {}", dest.parent_path()), eg::ad3::ServiceData::Type::ERR);
+					return;
+				}
+			}
+
+			if (not std::filesystem::copy_file(src, dest, std::filesystem::copy_options::overwrite_existing))
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Cannot save file to central repository {}.", dest), eg::ad3::ServiceData::Type::ERR);
+			}
+		}
 	}
 
 	std::string WDialer::generate_wav_filename(const std::string& validated_mobile, const std::string& validated_name)
