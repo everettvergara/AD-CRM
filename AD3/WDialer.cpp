@@ -21,14 +21,14 @@
 
 namespace eg::ad3
 {
-	WDialer::WDialer(wxMDIParentFrame* parent, const char* title, size_t account_ix) :
+	WDialer::WDialer(wxMDIParentFrame* parent, const char* title, size_t account_ix, bool browser_mode) :
 		WChildFrame(
 			WChildProp
 			{
 				.parent = parent,
 				.title = title,
 				.pos = wxDefaultPosition,
-				.size = wxSize(600, 450),
+				.size = wxSize(600, (browser_mode ? 600 : 450)),
 				.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
 				.form_columns = 2,
 				.has_tree = true
@@ -48,7 +48,8 @@ namespace eg::ad3
 		cm_button_(nullptr),
 		data_(),
 		current_call_(-1),
-		account_ix_(account_ix)
+		account_ix_(account_ix),
+		browser_mode_(browser_mode)
 
 	{
 		on_init_filter_controls_();
@@ -138,7 +139,15 @@ namespace eg::ad3
 			cm_button_->Disable();
 
 			new_button_->Disable();
-			call_button_->Enable();
+			if (browser_mode_)
+			{
+				call_button_->Disable();
+			}
+			else
+			{
+				call_button_->Enable();
+			}
+
 			call_again_button_->Disable();
 			stop_button_->Disable();
 			save_button_->Disable();
@@ -221,7 +230,14 @@ namespace eg::ad3
 				filter_status_->Disable();
 				remarks_->Enable();
 				new_button_->Enable();
-				call_again_button_->Enable();
+				if (browser_mode_)
+				{
+					call_again_button_->Disable();
+				}
+				else
+				{
+					call_again_button_->Enable();
+				}
 			}
 			else
 			{
@@ -339,12 +355,28 @@ namespace eg::ad3
 			{
 				new_button_->Enable();
 				call_button_->Disable();
-				call_again_button_->Enable();
+
+				if (browser_mode_)
+				{
+					call_again_button_->Enable();
+				}
+				else
+				{
+					call_again_button_->Disable();
+				}
 			}
 			else
 			{
 				new_button_->Disable();
-				call_button_->Enable();
+
+				if (browser_mode_)
+				{
+					call_button_->Disable();
+				}
+				else
+				{
+					call_button_->Enable();
+				}
 				call_again_button_->Disable();
 			}
 
@@ -357,9 +389,12 @@ namespace eg::ad3
 
 	void WDialer::on_init_tree_()
 	{
-		if (not std::filesystem::exists(k_calls_folder))
+		std::filesystem::path root_folder(browser_mode_ ? ConfigSettings::instance().playback_central_path : k_calls_folder);
+		auto root_folder_string = root_folder.string();
+
+		if (not std::filesystem::exists(root_folder))
 		{
-			if (not std::filesystem::create_directory(k_calls_folder))
+			if (not std::filesystem::create_directory(root_folder))
 			{
 				throw std::runtime_error("Could not create the calls folder.");
 			}
@@ -399,9 +434,9 @@ namespace eg::ad3
 				}
 			});
 
-		const auto root_id = tree_->AddRoot(k_calls_folder, -1, -1, new DirMeta(k_calls_folder));
+		const auto root_id = tree_->AddRoot(root_folder_string.c_str(), -1, -1, new DirMeta(root_folder_string.c_str()));
 
-		register_node_elements_(root_id, k_calls_folder);
+		register_node_elements_(root_id, root_folder_string.c_str());
 	}
 
 	void WDialer::on_init_buttons_()
@@ -578,6 +613,15 @@ namespace eg::ad3
 			});
 
 		filter_to_call_count_ = register_text_input("to_call_count", "To Call Count:", "0", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+
+		if (browser_mode_)
+		{
+			filter_is_auto_->Disable();
+			filter_client_->Disable();
+			filter_campaign_->Disable();
+			filter_prio_->Disable();
+			filter_status_->Disable();
+		}
 	}
 
 	void WDialer::on_init_input_controls_()
@@ -594,7 +638,7 @@ namespace eg::ad3
 		status_ = register_text_input("status", "Last Status:", "PJSIP_INV_STATE_NULL", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 		//time_of_call_ = register_text_input("time_of_call", "Time of Call:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 		//time_call_ended_ = register_text_input("time_call_ended", "Time Call Ended:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-		remarks_ = register_text_input_multi("remarks", "Remarks:", 1);
+		remarks_ = register_text_input_multi("remarks", "Remarks:", (browser_mode_ ? 5 : 1));
 		remarks_->SetHint("Enter details of your conversation here...");
 		//file_recording_ = register_text_input("wav_recording", "Playback file:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 		playback_button_ = register_button_field("Play");
@@ -1147,6 +1191,13 @@ namespace eg::ad3
 
 		const auto filename = std::format("{}/{}_{}_{}.json", meta_folder, DialerData::trimmed_name(data_.name), data_.mobile, std::time(nullptr));
 
+		std::filesystem::path src(data_.file_recording);
+
+		if (not std::filesystem::exists(src))
+		{
+			data_.file_recording = "";
+		}
+
 		data_.save(filename);
 
 		add_item_expand_(yyyy, mm, dd, std::filesystem::path(filename).filename().string());
@@ -1156,10 +1207,16 @@ namespace eg::ad3
 		// Save recordings to central
 		const auto& config = ConfigSettings::instance();
 
-		if (not config.playback_central_path.empty())
+		if (not config.playback_central_path.empty() and not data_.file_recording.empty())
 		{
 			const auto& sip = config.sip_accounts.front().sip_id;
 			std::filesystem::path src(data_.file_recording);
+
+			if (not std::filesystem::exists(src))
+			{
+				return;
+			}
+
 			std::filesystem::path dest = std::filesystem::path(config.playback_central_path) / config.sip_accounts.front().sip_id / data_.file_recording;
 
 			std::error_code ec;
@@ -1167,14 +1224,14 @@ namespace eg::ad3
 			{
 				if (ec)
 				{
-					ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Cannot create directory {}", dest.parent_path()), eg::ad3::ServiceData::Type::ERR);
+					ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Cannot create directory {}", dest.parent_path().string()), eg::ad3::ServiceData::Type::ERR);
 					return;
 				}
 			}
 
 			if (not std::filesystem::copy_file(src, dest, std::filesystem::copy_options::overwrite_existing))
 			{
-				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Cannot save file to central repository {}.", dest), eg::ad3::ServiceData::Type::ERR);
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Cannot save file to central repository {}.", dest.string()), eg::ad3::ServiceData::Type::ERR);
 			}
 		}
 	}

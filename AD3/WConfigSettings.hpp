@@ -18,7 +18,7 @@ namespace eg::ad3
 					.parent = parent,
 					.title = "AD3.20251010.1 Settings",
 					.pos = wxDefaultPosition,
-					.size = wxSize(400, 700),
+					.size = wxSize(400, 750),
 					.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
 					.form_columns = 2,
 					.has_tree = false
@@ -44,13 +44,14 @@ namespace eg::ad3
 			register_text_input("server_keep_alive_data", "Keep alive data:", settings.server_keep_alive_data);
 			register_checkbox("register_on_add", "Register on add:", settings.register_on_add);
 			register_checkbox("mock", "Mock mode:", settings.mock);
-
+			register_checkbox("is_admin", "Is Admin:", settings.is_admin);
 			register_text_input("db_driver", "DB Driver:", settings.db_driver);
 			register_text_input("db_server", "DB Server:", settings.db_server);
 			register_text_input("db_database", "DB Database:", settings.db_database);
 			register_text_input("db_user", "DB User:", settings.db_user);
 			register_text_input("db_password", "DB Password:", settings.db_password, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
 			register_text_input("fycrm_path", "CRM Path:", settings.fycrm_path);
+			register_text_input("playback_central_path", "Central Wav Path:", settings.playback_central_path);
 
 			register_button("Save", wxID_OK)->Bind(wxEVT_BUTTON, &WConfigSettings::on_ok_, this);
 			register_button("Cancel", wxID_CANCEL)->Bind(wxEVT_BUTTON, &WConfigSettings::on_cancel_, this);
@@ -78,6 +79,7 @@ namespace eg::ad3
 			auto server_keep_alive_data = get<wxTextCtrl>("server_keep_alive_data")->GetValue();
 			auto register_on_add = get<wxCheckBox>("register_on_add")->GetValue();
 			auto mock = get<wxCheckBox>("mock")->GetValue();
+			auto is_admin = get<wxCheckBox>("is_admin")->GetValue();
 
 			// DB
 			auto db_driver = get<wxTextCtrl>("db_driver")->GetValue();
@@ -87,6 +89,7 @@ namespace eg::ad3
 			auto db_password = get<wxTextCtrl>("db_password")->GetValue();
 
 			auto fycrm_path = get<wxTextCtrl>("fycrm_path")->GetValue();
+			auto playback_central_path = get<wxTextCtrl>("playback_central_path")->GetValue();
 
 			if (db_driver.IsEmpty()) return "DB Driver is empty";
 			if (db_server.IsEmpty()) return "DB Server is empty";
@@ -129,6 +132,7 @@ namespace eg::ad3
 			settings.server_keep_alive_data = server_keep_alive_data.ToStdString();
 			settings.register_on_add = register_on_add;
 			settings.mock = mock;
+			settings.is_admin = is_admin;
 
 			settings.db_driver = db_driver.ToStdString();
 			settings.db_server = db_server.ToStdString();
@@ -137,6 +141,7 @@ namespace eg::ad3
 			settings.db_password = db_password.ToStdString();
 
 			settings.fycrm_path = fycrm_path.ToStdString();
+			settings.playback_central_path = playback_central_path.ToStdString();
 
 			return nullptr;
 		}

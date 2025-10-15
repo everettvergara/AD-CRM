@@ -24,7 +24,7 @@ namespace eg::ad3
 	{
 	public:
 
-		WDialer(wxMDIParentFrame* parent, const char* title, size_t account_ix);
+		WDialer(wxMDIParentFrame* parent, const char* title, size_t account_ix, bool browser_mode = false);
 
 	protected:
 
@@ -61,6 +61,7 @@ namespace eg::ad3
 
 		DialerFilter filter_;
 		DialerData data_;
+		bool browser_mode_;
 
 		void on_init_filter_controls_();
 		void on_init_input_controls_();

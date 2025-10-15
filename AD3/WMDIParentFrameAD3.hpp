@@ -38,10 +38,14 @@ namespace eg::ad3
 			register_sub_menu(call_menu, next_menu_id(), "Dialer - E", &WMDIParentFrameAD3::on_call_dialer5, this);
 			register_sub_menu(call_menu, next_menu_id(), "Dialer - F", &WMDIParentFrameAD3::on_call_dialer6, this);
 
-			//register_sub_menu(call_menu, next_menu_id(), "Auto dial", &WMDIParentFrameAD3::on_call_auto_dial, this);
-
 			menu->Append(file_menu, "&File");
 			menu->Append(call_menu, "&Call");
+			if (ConfigSettings::instance().is_admin)
+			{
+				auto* admin_menu = new wxMenu();
+				register_sub_menu(admin_menu, next_menu_id(), "Recordings", &WMDIParentFrameAD3::on_admin_recordings, this);
+				menu->Append(admin_menu, "&Admin");
+			}
 		}
 
 		void on_file_settings(wxCommandEvent&)
@@ -50,6 +54,26 @@ namespace eg::ad3
 			if (not is_child_active(id))
 			{
 				child_ids[id] = new WConfigSettings(this);
+				return;
+			}
+		}
+
+		void on_admin_recordings(wxCommandEvent&)
+		{
+			static constexpr auto id = "recordings";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
+			if (not is_child_active(id))
+			{
+				auto ix = 5 % ConfigSettings::instance().max_ep();
+				auto child = new WDialer(this, "Recordings Browser", ix, true);
+				child_ids[id] = child;
+
 				return;
 			}
 		}
