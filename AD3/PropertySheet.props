@@ -4,6 +4,7 @@
   <PropertyGroup Label="UserMacros">
     <WXSuffix>d</WXSuffix>
     <PJSuffix>Debug-Dynamic</PJSuffix>
+    <CurlSuffix>-d</CurlSuffix>
   </PropertyGroup>
   <PropertyGroup>
     <_PropertySheetDisplayName>Project</_PropertySheetDisplayName>
@@ -15,6 +16,9 @@
     </BuildMacro>
     <BuildMacro Include="PJSuffix">
       <Value>$(PJSuffix)</Value>
+    </BuildMacro>
+    <BuildMacro Include="CurlSuffix">
+      <Value>$(CurlSuffix)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

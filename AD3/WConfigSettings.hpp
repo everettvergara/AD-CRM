@@ -16,15 +16,14 @@ namespace eg::ad3
 				WChildProp
 				{
 					.parent = parent,
-					.title = "AD3.20251010.1 Settings",
+					.title = "AD3.20251020 Settings",
 					.pos = wxDefaultPosition,
-					.size = wxSize(400, 750),
+					.size = wxSize(400, 600),
 					.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
 					.form_columns = 2,
 					.has_tree = false
 				}
 			)
-
 		{
 			const auto& settings = ConfigSettings::instance();
 
@@ -32,19 +31,17 @@ namespace eg::ad3
 			register_text_input("sip_server_port", "Port:", settings.server_port);
 
 			register_text_input("sip_accounts", "SIP Accounts:", settings.sip_accounts_str());
-			//register_text_input("sip_id2", "SIP ID2:", settings.sip_id2);
-			//register_text_input("sip_password2", "SIP Password2:", settings.sip_password2);
-			register_text_input("concurrent_calls", "Concurrent calls:", std::to_string(settings.concurrent_calls));
-			register_text_input("max_calls", "Max calls:", std::to_string(settings.max_calls));
+			//register_text_input("concurrent_calls", "Concurrent calls:", std::to_string(settings.concurrent_calls));
+			//register_text_input("max_calls", "Max calls:", std::to_string(settings.max_calls));
 			register_text_input("redial", "Dial/Redial:", std::to_string(settings.redial));
 
 			register_text_input("max_registration_attempts", "Max account registration attempts:", std::to_string(settings.max_registration_attempts));
 			register_text_input("server_timeout_secs", "Server timeout (secs):", std::to_string(settings.server_timeout_secs));
 			register_text_input("server_keep_alive_secs", "Keep alive (secs):", std::to_string(settings.server_keep_alive_secs));
 			register_text_input("server_keep_alive_data", "Keep alive data:", settings.server_keep_alive_data);
-			register_checkbox("register_on_add", "Register on add:", settings.register_on_add);
-			register_checkbox("mock", "Mock mode:", settings.mock);
-			register_checkbox("is_admin", "Is Admin:", settings.is_admin);
+			//register_checkbox("register_on_add", "Register on add:", settings.register_on_add);
+			//register_checkbox("mock", "Mock mode:", settings.mock);
+			//register_checkbox("is_admin", "Is Admin:", settings.is_admin);
 			register_text_input("db_driver", "DB Driver:", settings.db_driver);
 			register_text_input("db_server", "DB Server:", settings.db_server);
 			register_text_input("db_database", "DB Database:", settings.db_database);
@@ -66,20 +63,17 @@ namespace eg::ad3
 			auto server_ip = get<wxTextCtrl>("sip_server_ip")->GetValue();
 			auto server_port = get<wxTextCtrl>("sip_server_port")->GetValue();
 			auto sip_accounts = get<wxTextCtrl>("sip_accounts")->GetValue();
-			//auto sip_password = get<wxTextCtrl>("sip_password")->GetValue();
-			//auto sip_id2 = get<wxTextCtrl>("sip_id2")->GetValue();
-			//auto sip_password2 = get<wxTextCtrl>("sip_password2")->GetValue();
-			auto concurrent_calls = get<wxTextCtrl>("concurrent_calls")->GetValue();
-			auto max_calls = get<wxTextCtrl>("max_calls")->GetValue();
+			//auto concurrent_calls = get<wxTextCtrl>("concurrent_calls")->GetValue();
+			//auto max_calls = get<wxTextCtrl>("max_calls")->GetValue();
 			auto redial = get<wxTextCtrl>("redial")->GetValue();
 
 			auto max_registration_attempts = get<wxTextCtrl>("max_registration_attempts")->GetValue();
 			auto server_timeout_secs = get<wxTextCtrl>("server_timeout_secs")->GetValue();
 			auto server_keep_alive_secs = get<wxTextCtrl>("server_keep_alive_secs")->GetValue();
 			auto server_keep_alive_data = get<wxTextCtrl>("server_keep_alive_data")->GetValue();
-			auto register_on_add = get<wxCheckBox>("register_on_add")->GetValue();
-			auto mock = get<wxCheckBox>("mock")->GetValue();
-			auto is_admin = get<wxCheckBox>("is_admin")->GetValue();
+			//auto register_on_add = get<wxCheckBox>("register_on_add")->GetValue();
+			//auto mock = get<wxCheckBox>("mock")->GetValue();
+			//auto is_admin = get<wxCheckBox>("is_admin")->GetValue();
 
 			// DB
 			auto db_driver = get<wxTextCtrl>("db_driver")->GetValue();
@@ -105,7 +99,7 @@ namespace eg::ad3
 			//if (sip_id2.IsEmpty()) return "SIP ID2 is empty";
 			//if (sip_password2.IsEmpty()) return "Password2 is empty";
 
-			if (concurrent_calls.IsEmpty()) return "Concurrent calls is empty";
+			//if (concurrent_calls.IsEmpty()) return "Concurrent calls is empty";
 			if (redial.IsEmpty()) return "Dial / Redial is empty. Must be >= 1.";
 
 			if (max_registration_attempts.IsEmpty()) return "Max registration attempts is empty";
@@ -118,21 +112,17 @@ namespace eg::ad3
 			auto& settings = ConfigSettings::instance();
 			settings.server_ip = server_ip.ToStdString();
 			settings.server_port = server_port.ToStdString();
-			//settings.sip_id = sip_id.ToStdString();
-			//settings.sip_password = sip_password.ToStdString();
-			//settings.sip_id2 = sip_id2.ToStdString();
-			//settings.sip_password2 = sip_password2.ToStdString();
 
-			settings.concurrent_calls = std::stoull(concurrent_calls.ToStdString());
-			settings.max_calls = std::stoull(max_calls.ToStdString());
+			//settings.concurrent_calls = std::stoull(concurrent_calls.ToStdString());
+			//settings.max_calls = std::stoull(max_calls.ToStdString());
 			settings.max_registration_attempts = std::stoull(max_registration_attempts.ToStdString());
 			settings.redial = std::stoull(redial.ToStdString());
 			settings.server_timeout_secs = std::stoul(server_timeout_secs.ToStdString());
 			settings.server_keep_alive_secs = std::stoul(server_keep_alive_secs.ToStdString());
 			settings.server_keep_alive_data = server_keep_alive_data.ToStdString();
-			settings.register_on_add = register_on_add;
-			settings.mock = mock;
-			settings.is_admin = is_admin;
+			//settings.register_on_add = register_on_add;
+			//settings.mock = mock;
+			//settings.is_admin = is_admin;
 
 			settings.db_driver = db_driver.ToStdString();
 			settings.db_server = db_server.ToStdString();

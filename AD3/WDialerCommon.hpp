@@ -197,6 +197,43 @@ namespace eg::ad3
 			return validated_mobile;
 		}
 
+		static [[nodiscard]] std::string masked_mobile(const std::string& m)
+		{
+			//LOG_II("masking {}", m);
+			std::string validated_mobile;
+			for (size_t i = 0; const auto ch : m)
+			{
+				//LOG_II("masking i:{}", i);
+
+				if (i < 4 or i >= 8)
+				{
+					if (std::isdigit(ch))
+					{
+						//LOG_II("masking inside {}", i);
+
+						validated_mobile += ch;
+					}
+					else
+					{
+						//LOG_II("masking insideX {}", i);
+
+						validated_mobile += 'x';
+					}
+				}
+				else
+				{
+					//LOG_II("masking outsideX {}", i);
+
+					validated_mobile += 'x';
+				}
+
+				++i;
+			}
+			//LOG_II("validated {}", validated_mobile);
+
+			return validated_mobile;
+		}
+
 		static [[nodiscard]] std::string trimmed_name(const std::string& n)
 		{
 			if (n.empty())

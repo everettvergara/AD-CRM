@@ -15,9 +15,13 @@
 #include "ServicePJCalls.h"
 #include "ServicePJWavPool.h"
 #include "ServiceMsg.h"
+#include "ServiceFTP.hpp"
 
 // UI/UX
 #include "WAppAD3.hpp"
+
+//#define CURL_STATICLIB 1
+//#include "curl/curl.h"
 
 static constexpr auto k_app_name = "AD3";
 
@@ -25,6 +29,20 @@ wxIMPLEMENT_APP_NO_MAIN(eg::ad3::WAppAD3);
 
 // todo: REDIAL = 3:
 // todo: Add client/campaign/name
+
+void shutdown()
+{
+	// Can be called multile times safely
+	// Can be called in any order safely
+
+	eg::ftp::ServiceFTP::shutdown();
+	eg::ad3::ServiceMsg::shutdown();
+	eg::ad3::ServicePJWavPool::shutdown();
+	eg::ad3::ServicePJCalls::shutdown();
+	eg::ad3::ServicePJAccount::shutdown();
+	eg::ad3::ServicePJEndpoint::shutdown();
+	eg::sys::ServiceCtrlC::shutdown();
+}
 
 int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow)
 {
@@ -45,6 +63,7 @@ int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow)
 		eg::ad3::ServicePJCalls::init();
 		eg::ad3::ServicePJWavPool::init();
 		eg::ad3::ServiceMsg::init();
+		eg::ftp::ServiceFTP::init();
 
 		wxApp::SetInstance(new eg::ad3::WAppAD3);
 		if (not wxEntryStart(hInst))
@@ -63,17 +82,21 @@ int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow)
 
 		wxEntryCleanup();
 
+		shutdown();
+
 		return EXIT_SUCCESS;
 	}
 
 	catch (const std::exception& e)
 	{
+		shutdown();
 		MessageBoxA(nullptr, e.what(), "Fatal Error", MB_OK | MB_ICONERROR);
 		return EXIT_FAILURE;
 	}
 
 	catch (...)
 	{
+		shutdown();
 		MessageBoxA(nullptr, "Fatal error: unknown exception", "Fatal Error", MB_OK | MB_ICONERROR);
 		return EXIT_FAILURE;
 	}

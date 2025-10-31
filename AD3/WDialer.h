@@ -62,6 +62,7 @@ namespace eg::ad3
 		DialerFilter filter_;
 		DialerData data_;
 		bool browser_mode_;
+		std::string cached_sip_id_;
 
 		void on_init_filter_controls_();
 		void on_init_input_controls_();
@@ -93,7 +94,7 @@ namespace eg::ad3
 		void register_node_elements_(const wxTreeItemId& node_id, const std::string& path);
 		void add_item_expand_(const std::string& yyyy, const std::string& mm, const std::string& dd, const std::string& file);
 
-		static [[nodiscard]] std::string generate_wav_filename(const std::string& validated_mobile, const std::string& validated_name);
+		static [[nodiscard]] std::string generate_wav_filename(const std::string& validated_mobile, const std::string& validated_name, const std::string& cached_sip_id);
 		[[nodiscard]] std::tuple<std::string, std::string, std::string, std::string> generate_meta_folder();
 	};
 }

@@ -19,8 +19,6 @@ namespace eg::ad3
 	{
 		std::string server_ip;
 		std::string server_port;
-		//std::string sip_id;
-		//std::string sip_password;
 		std::vector<sip_account> sip_accounts;
 		size_t concurrent_calls;
 		size_t max_calls;
@@ -32,6 +30,7 @@ namespace eg::ad3
 		bool register_on_add;
 		bool mock;
 		bool is_admin;
+		bool number_masking;
 		std::string db_driver;
 		std::string db_server;
 		std::string db_database;
@@ -39,6 +38,12 @@ namespace eg::ad3
 		std::string db_password;
 		std::string fycrm_path;
 		std::string playback_central_path;
+
+		std::string ftp_server;
+		std::string ftp_port;
+		std::string ftp_user;
+		std::string ftp_password;
+		std::string ftp_root_folder;
 
 		size_t redial = 0;
 
@@ -84,9 +89,8 @@ namespace eg::ad3
 			{
 				{"server_ip", server_ip},
 				{"server_port", server_port},
-				//{"sip_id", sip_id},
-				//{"sip_password", sip_password},
 				{"is_admin", is_admin},
+				{"number_masking", number_masking},
 				{"sip_accounts", sip_accounts},
 				{"concurrent_calls", concurrent_calls},
 				{"max_calls", max_calls},
@@ -103,7 +107,12 @@ namespace eg::ad3
 				{"db_password", db_password},
 				{"fycrm_path", fycrm_path},
 				{"redial", redial},
-				{"playback_central_path", playback_central_path}
+				{"playback_central_path", playback_central_path},
+				{"ftp_server", ftp_server},
+				{"ftp_port", ftp_port},
+				{"ftp_user", ftp_user},
+				{"ftp_password", ftp_password},
+				{"ftp_root_folder", ftp_root_folder}
 			};
 		}
 
@@ -134,8 +143,6 @@ namespace eg::ad3
 					}
 					return accounts;
 				}()),
-			//sip_id(data.value("sip_id", "1234")),
-			//sip_password(data.value("sip_password", "0000")),
 			concurrent_calls(data.value("concurrent_calls", 2ull)),
 			max_calls(data.value("max_calls", 4ull)),
 			max_registration_attempts(data.value("max_registration_attemps", 3ull)),
@@ -145,6 +152,7 @@ namespace eg::ad3
 			register_on_add(data.value("register_on_add", false)),
 			mock(data.value("mock", true)),
 			is_admin(data.value("is_admin", false)),
+			number_masking(data.value("number_masking", false)),
 			db_driver(data.value("db_driver", "{SQL Server Native Client 11.0}")),
 			db_server(data.value("db_server", "WIN-0BL4BGRJARA")),
 			db_database(data.value("db_database", "wmc")),
@@ -152,7 +160,12 @@ namespace eg::ad3
 			db_password(data.value("db_password", "Kerberos2014!")),
 			fycrm_path(data.value("fycrm_path", "c:/fy-crm/crm_dialer.exe")),
 			redial(data.value("redial", 1)),
-			playback_central_path(data.value("playback_central_path", ""))
+			playback_central_path(data.value("playback_central_path", "")),
+			ftp_server(data.value("ftp_server", "")),
+			ftp_port(data.value("ftp_port", "21")),
+			ftp_user(data.value("ftp_user", "")),
+			ftp_password(data.value("ftp_password", "")),
+			ftp_root_folder(data.value("ftp_root_folder", "ad3/Answered"))
 		{
 		}
 	};

@@ -15,6 +15,7 @@
 #include "ServicePJCalls.h"
 #include "ConfigSettings.hpp"
 #include "ServiceMsg.h"
+#include "ServiceFTP.hpp"
 
 // TODO: to call count not reset when client, campaign, prio changed
 // todo: - should not be able to make another call if there's an ongoing call
@@ -28,7 +29,7 @@ namespace eg::ad3
 				.parent = parent,
 				.title = title,
 				.pos = wxDefaultPosition,
-				.size = wxSize(600, (browser_mode ? 600 : 450)),
+				.size = wxSize((browser_mode ? 900 : 600), (browser_mode ? 700 : 450)),
 				.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
 				.form_columns = 2,
 				.has_tree = true
@@ -49,7 +50,8 @@ namespace eg::ad3
 		data_(),
 		current_call_(-1),
 		account_ix_(account_ix),
-		browser_mode_(browser_mode)
+		browser_mode_(browser_mode),
+		cached_sip_id_(ConfigSettings::instance().sip_accounts.front().sip_id)
 
 	{
 		on_init_filter_controls_();
@@ -59,7 +61,10 @@ namespace eg::ad3
 		update_components_state_();
 		this->Bind(wxEVT_CLOSE_WINDOW, &WDialer::on_win_close_, this);
 
-		ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::string(title) + " - Ready to Call...", eg::ad3::ServiceData::Type::INFO);
+		if (not browser_mode_)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::string(title) + " - Ready to Call...", eg::ad3::ServiceData::Type::INFO);
+		}
 
 		Show(true);
 	}
@@ -75,14 +80,24 @@ namespace eg::ad3
 			filter_to_call_count_->ChangeValue("0");
 		}
 
-		//id_->ChangeValue(std::to_string(data_.id));
-		//ucode_->ChangeValue(data_.ucode);
 		mobile_->ChangeValue(data_.mobile);
 		name_->ChangeValue(data_.name);
 		status_->ChangeValue(data_.status);
-		//time_of_call_->ChangeValue(data_.time_of_call);
-		//time_call_ended_->ChangeValue(data_.time_call_ended);
-		remarks_->ChangeValue(data_.remarks);
+
+		if (browser_mode_)
+		{
+			DialerData copy = data_;
+			if (ConfigSettings::instance().number_masking)
+			{
+				copy.mobile = DialerData::masked_mobile(copy.mobile);
+			}
+
+			remarks_->ChangeValue(copy.to_json().dump(4));
+		}
+		else
+		{
+			remarks_->ChangeValue(data_.remarks);
+		}
 
 		if (data_.has_confirmed_status())
 		{
@@ -385,23 +400,39 @@ namespace eg::ad3
 			cancel_button_->Enable();
 			break;
 		}
+
+		// hack
+		if (browser_mode_)
+		{
+			filter_is_auto_->Disable();
+			filter_client_->Disable();
+			filter_campaign_->Disable();
+			filter_prio_->Disable();
+			filter_status_->Disable();
+			mobile_->Disable();
+			name_->Disable();
+			remarks_->Disable();
+			new_button_->Disable();
+			call_again_button_->Disable();
+			call_button_->Disable();
+		}
 	}
 
 	void WDialer::on_init_tree_()
 	{
-		std::filesystem::path root_folder(browser_mode_ ? ConfigSettings::instance().playback_central_path : k_calls_folder);
+		std::filesystem::path root_folder(browser_mode_ ? ConfigSettings::instance().playback_central_path + '/' + k_calls_folder : cached_sip_id_);
 		auto root_folder_string = root_folder.string();
 
 		if (not std::filesystem::exists(root_folder))
 		{
 			if (not std::filesystem::create_directory(root_folder))
 			{
-				throw std::runtime_error("Could not create the calls folder.");
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::string("Could not create the calls folder: ") + root_folder_string, eg::ad3::ServiceData::Type::ERR);
+				return;
 			}
 		}
 
 		tree_ = register_tree("history", 300);
-
 		tree_->Bind(wxEVT_TREE_SEL_CHANGED, [this](wxTreeEvent& e)
 			{
 				const auto item_id = e.GetItem();
@@ -613,15 +644,6 @@ namespace eg::ad3
 			});
 
 		filter_to_call_count_ = register_text_input("to_call_count", "To Call Count:", "0", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-
-		if (browser_mode_)
-		{
-			filter_is_auto_->Disable();
-			filter_client_->Disable();
-			filter_campaign_->Disable();
-			filter_prio_->Disable();
-			filter_status_->Disable();
-		}
 	}
 
 	void WDialer::on_init_input_controls_()
@@ -638,8 +660,8 @@ namespace eg::ad3
 		status_ = register_text_input("status", "Last Status:", "PJSIP_INV_STATE_NULL", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 		//time_of_call_ = register_text_input("time_of_call", "Time of Call:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 		//time_call_ended_ = register_text_input("time_call_ended", "Time Call Ended:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-		remarks_ = register_text_input_multi("remarks", "Remarks:", (browser_mode_ ? 5 : 1));
-		remarks_->SetHint("Enter details of your conversation here...");
+		remarks_ = register_text_input_multi("remarks", "Remarks:", (browser_mode_ ? 18 : 1), "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		//remarks_->SetHint("Enter details of your conversation here...");
 		//file_recording_ = register_text_input("wav_recording", "Playback file:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 		playback_button_ = register_button_field("Play");
 		playback_button_->Bind(wxEVT_BUTTON, &WDialer::on_playback_, this);
@@ -740,18 +762,31 @@ namespace eg::ad3
 							nanodbc::statement stmt(conn);
 							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
 
-							const auto remarks = [&info, this]
+							const auto remarks = [&info, &settings, this]
 								{
 									if (info.lastStatusCode == PJSIP_SC_BUSY_HERE or info.lastStatusCode == PJSIP_SC_BUSY_EVERYWHERE)
 									{
+										if (settings.number_masking)
+										{
+											return std::format("AUTO DIALER: Attempted to call {} but number is Busy.", DialerData::masked_mobile(data_.mobile));
+										}
+
 										return std::format("AUTO DIALER: Attempted to call {} but number is Busy.", data_.mobile);
 									}
 
 									else if (info.lastStatusCode == PJSIP_SC_REQUEST_TIMEOUT or info.lastStatusCode == PJSIP_SC_TEMPORARILY_UNAVAILABLE)
 									{
+										if (settings.number_masking)
+										{
+											return std::format("AUTO DIALER: Attempted to call {} but callee did not answer.", DialerData::masked_mobile(data_.mobile));
+										}
 										return std::format("AUTO DIALER: Attempted to call {} but callee did not answer.", data_.mobile);
 									}
 
+									if (settings.number_masking)
+									{
+										return std::format("AUTO DIALER: Attempted to call {} but call did not connect.", DialerData::masked_mobile(data_.mobile));
+									}
 									return std::format("AUTO DIALER: Attempted to call {} but call did not connect.", data_.mobile);
 								}();
 
@@ -804,7 +839,9 @@ namespace eg::ad3
 
 							nanodbc::statement stmt(conn);
 							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
-							const std::string remarks = std::format("Called {} Conversation Time: {}s Playback: {}", data_.mobile, static_cast<size_t>(time_elapsed), data_.file_recording);
+
+							auto mobile = settings.number_masking ? DialerData::masked_mobile(data_.mobile) : data_.mobile;
+							const std::string remarks = std::format("Called {} Conversation Time: {}s Playback: {}", mobile, static_cast<size_t>(time_elapsed), data_.file_recording);
 
 							const size_t uploader_contact_id = 0;
 							stmt.bind(0, &data_.id);
@@ -939,7 +976,7 @@ namespace eg::ad3
 					auto next_id = results.get<int>(0);
 					if (next_id == -1 or next_id > filter_.selected_status->max_id)
 					{
-						filter_.selected_status->next_id = filter_.selected_status->max_id + 1;
+						filter_.selected_status->next_id = filter_.selected_status->min_id;
 
 						//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
 						ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::WARNING);
@@ -951,6 +988,13 @@ namespace eg::ad3
 					{
 						filter_.selected_status->next_id = next_id + 1;
 					}
+				}
+
+				if (filter_.selected_status->next_id > filter_.selected_status->max_id)
+				{
+					ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::WARNING);
+					update_components_from_data_();
+					return;
 				}
 			}
 
@@ -1046,7 +1090,7 @@ namespace eg::ad3
 			}
 
 			auto& calls = ServicePJCalls::instance();
-			data_.file_recording = generate_wav_filename(data_.mobile, validated_name);
+			data_.file_recording = generate_wav_filename(data_.mobile, validated_name, cached_sip_id_);
 
 			//LOG_II("Calling {} {}", account_ix_, data_.file_recording);
 
@@ -1189,7 +1233,9 @@ namespace eg::ad3
 			}
 		}
 
-		const auto filename = std::format("{}/{}_{}_{}.json", meta_folder, DialerData::trimmed_name(data_.name), data_.mobile, std::time(nullptr));
+		const auto& config = ConfigSettings::instance();
+
+		const auto filename = std::format("{}/{}_{}_{}.json", meta_folder, DialerData::trimmed_name(data_.name), config.number_masking ? DialerData::masked_mobile(data_.mobile) : data_.mobile, std::time(nullptr));
 
 		std::filesystem::path src(data_.file_recording);
 
@@ -1205,42 +1251,53 @@ namespace eg::ad3
 		update_components_state_();
 
 		// Save recordings to central
-		const auto& config = ConfigSettings::instance();
 
-		if (not config.playback_central_path.empty() and not data_.file_recording.empty())
+		if (not config.playback_central_path.empty() and
+			not data_.file_recording.empty() and
+			not config.ftp_server.empty())
 		{
-			const auto& sip = config.sip_accounts.front().sip_id;
-			std::filesystem::path src(data_.file_recording);
+			// Src/Dest Path;
 
-			if (not std::filesystem::exists(src))
+			// wav_path = ""ftp:://127.0.0.1/ad3/Answered/record/1234/xxx_yyy_zzz_00000000000_tttttttt.wav"
+			const auto wav_path = config.ftp_server + "/" + config.ftp_root_folder + "/" + data_.file_recording;
+
+			// json_path = ""ftp:://127.0.0.1/ad3/Answered/calls/1234/yyyy/mm/dd/ucode/xxx_yyy_zzz_0000000000_tttttttt.json"
+			const auto json_path = config.ftp_server + "/" + std::format("{}/{}/{}", config.ftp_root_folder, k_calls_folder, filename);
+
+			// Uplod Files
+			if (not eg::ftp::ServiceFTP::upload
+			(
+				data_.file_recording,
+				wav_path,
+				std::format("{}:{}", config.ftp_user, config.ftp_password)
+			))
 			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Could not upload the wav file.", eg::ad3::ServiceData::Type::ERR);
 				return;
 			}
 
-			std::filesystem::path dest = std::filesystem::path(config.playback_central_path) / config.sip_accounts.front().sip_id / data_.file_recording;
-
-			std::error_code ec;
-			if (not std::filesystem::create_directories(dest.parent_path(), ec))
+			if (not eg::ftp::ServiceFTP::upload
+			(
+				filename,
+				json_path,
+				std::format("{}:{}", config.ftp_user, config.ftp_password)
+			))
 			{
-				if (ec)
-				{
-					ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Cannot create directory {}", dest.parent_path().string()), eg::ad3::ServiceData::Type::ERR);
-					return;
-				}
-			}
-
-			if (not std::filesystem::copy_file(src, dest, std::filesystem::copy_options::overwrite_existing))
-			{
-				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Cannot save file to central repository {}.", dest.string()), eg::ad3::ServiceData::Type::ERR);
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Could not upload the json file.", eg::ad3::ServiceData::Type::ERR);
+				return;
 			}
 		}
 	}
 
-	std::string WDialer::generate_wav_filename(const std::string& validated_mobile, const std::string& validated_name)
+	std::string WDialer::generate_wav_filename(const std::string& validated_mobile, const std::string& validated_name, const std::string& cached_sip_id)
 	{
+		const auto& config = ConfigSettings::instance(); // ensure settings is loaded
+
 		const auto t = std::time(nullptr);
 		const auto tm = *std::localtime(&t);
-		return std::format("{}/{}_{}_{}.wav", k_record_folder, validated_name, validated_mobile, t);
+		//LOG_II("masking {}", config.number_masking ? "true" : "false");
+
+		return std::format("{}/{}/{}_{}_{}.wav", k_record_folder, cached_sip_id, validated_name, config.number_masking ? DialerData::masked_mobile(validated_mobile) : validated_mobile, t);
 	}
 
 	std::tuple<std::string, std::string, std::string, std::string> WDialer::generate_meta_folder()
@@ -1250,7 +1307,7 @@ namespace eg::ad3
 		auto yyyy = std::format("{:04}", tm.tm_year + 1900);
 		auto mm = std::format("{:02}", tm.tm_mon + 1);
 		auto dd = std::format("{:02}", tm.tm_mday);
-		return { std::format("{}/{}/{}/{}/{}", k_calls_folder, yyyy, mm, dd, (data_.ucode.empty() ? "NA" : data_.ucode)), yyyy, mm, dd };
+		return { std::format("{}/{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd, (data_.ucode.empty() ? "NA" : data_.ucode)), yyyy, mm, dd };
 	}
 
 	void WDialer::add_item_expand_(const std::string& yyyy, const std::string& mm, const std::string& dd, const std::string& file)
@@ -1277,38 +1334,38 @@ namespace eg::ad3
 		auto fyyyy = item_exists(root_id, yyyy);
 		if (fyyyy == root_id)
 		{
-			fyyyy = tree_->AppendItem(root_id, yyyy, -1, -1, new DirMeta(std::format("{}/{}", k_calls_folder, yyyy)));
+			fyyyy = tree_->AppendItem(root_id, yyyy, -1, -1, new DirMeta(std::format("{}/{}", cached_sip_id_, yyyy)));
 		}
 
 		auto fmm = item_exists(fyyyy, mm);
 		if (fmm == fyyyy)
 		{
-			fmm = tree_->AppendItem(fyyyy, mm, -1, -1, new DirMeta(std::format("{}/{}/{}", k_calls_folder, yyyy, mm)));
+			fmm = tree_->AppendItem(fyyyy, mm, -1, -1, new DirMeta(std::format("{}/{}/{}", cached_sip_id_, yyyy, mm)));
 		}
 
 		auto fdd = item_exists(fmm, dd);
 		if (fdd == fmm)
 		{
-			fdd = tree_->AppendItem(fmm, dd, -1, -1, new DirMeta(std::format("{}/{}/{}/{}", k_calls_folder, yyyy, mm, dd)));
+			fdd = tree_->AppendItem(fmm, dd, -1, -1, new DirMeta(std::format("{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd)));
 		}
 
 		auto tucode = (data_.ucode.empty() ? std::string("NA") : data_.ucode);
 		auto ucode = item_exists(fdd, tucode);
 		if (ucode == fdd)
 		{
-			ucode = tree_->AppendItem(fdd, tucode, -1, -1, new DirMeta(std::format("{}/{}/{}/{}/{}", k_calls_folder, yyyy, mm, dd, tucode)));
+			ucode = tree_->AppendItem(fdd, tucode, -1, -1, new DirMeta(std::format("{}/{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd, tucode)));
 		}
 
 		if (auto item_data = dynamic_cast<DirMeta*>(tree_->GetItemData(ucode)); not item_data->visited)
 		{
-			register_node_elements_(ucode, std::format("{}/{}/{}/{}/{}", k_calls_folder, yyyy, mm, dd, tucode));
+			register_node_elements_(ucode, std::format("{}/{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd, tucode));
 			auto file_id = item_exists(ucode, file);
 			tree_->SelectItem(file_id);
 			item_data->visited = true;
 		}
 		else
 		{
-			auto file_id = tree_->AppendItem(ucode, file, -1, -1, new DirMeta(std::format("{}/{}/{}/{}/{}/{}", k_calls_folder, yyyy, mm, dd, tucode, file), true));
+			auto file_id = tree_->AppendItem(ucode, file, -1, -1, new DirMeta(std::format("{}/{}/{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd, tucode, file), true));
 			tree_->SelectItem(file_id);
 		}
 
@@ -1361,7 +1418,9 @@ namespace eg::ad3
 			update_components_state_();
 
 			// Stupidly Blocking
-			auto result = ServicePJCalls::instance().play_wav(data_.file_recording);
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("{}/{}", ConfigSettings::instance().playback_central_path, data_.file_recording), eg::ad3::ServiceData::Type::ATTENTION);
+
+			auto result = ServicePJCalls::instance().play_wav(std::format("{}/{}", ConfigSettings::instance().playback_central_path, data_.file_recording));
 
 			data_.state = orig_state;
 			update_components_state_();
