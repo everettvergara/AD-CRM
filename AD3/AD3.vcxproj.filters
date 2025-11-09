@@ -60,6 +60,12 @@
     <ClCompile Include="ServiceMsg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WRDialer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ServicePJRoboCalls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WApp.h">
@@ -126,6 +132,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ServiceFTP.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WRDialer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PJCallRoboDial.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ServicePJRoboCalls.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -13,6 +13,7 @@
 #include "ServicePJEndpoint.h"
 #include "ServicePJAccount.h"
 #include "ServicePJCalls.h"
+#include "ServicePJRoboCalls.h"
 #include "ServicePJWavPool.h"
 #include "ServiceMsg.h"
 #include "ServiceFTP.hpp"
@@ -39,6 +40,7 @@ void shutdown()
 	eg::ad3::ServiceMsg::shutdown();
 	eg::ad3::ServicePJWavPool::shutdown();
 	eg::ad3::ServicePJCalls::shutdown();
+	eg::ad3::ServicePJRoboCalls::shutdown();
 	eg::ad3::ServicePJAccount::shutdown();
 	eg::ad3::ServicePJEndpoint::shutdown();
 	eg::sys::ServiceCtrlC::shutdown();
@@ -61,6 +63,8 @@ int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow)
 		eg::ad3::ServicePJEndpoint::init();
 		eg::ad3::ServicePJAccount::init();
 		eg::ad3::ServicePJCalls::init();
+		eg::ad3::ServicePJRoboCalls::init();
+
 		eg::ad3::ServicePJWavPool::init();
 		eg::ad3::ServiceMsg::init();
 		eg::ftp::ServiceFTP::init();

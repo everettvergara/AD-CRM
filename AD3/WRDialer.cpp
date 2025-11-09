@@ -1,0 +1,1355 @@
+#include "WRDialer.h"
+#include <fstream>
+#include <format>
+#include <tuple>
+#include <chrono>
+#include <algorithm>
+#include <nlohmann/json.hpp>
+#include <miniaudio.h>
+
+#include <nanodbc/nanodbc.h>
+#include <wx/event.h>
+#include "Common/StringHelper.hpp"
+#include "Common/Run.hpp"
+#include "ServicePJAccount.h"
+#include "ServicePJRoboCalls.h"
+#include "ConfigSettings.hpp"
+#include "ServiceMsg.h"
+#include "ServiceFTP.hpp"
+
+// TODO: to call count not reset when client, campaign, prio changed
+// todo: - should not be able to make another call if there's an ongoing call
+
+namespace eg::ad3
+{
+	WRDialer::WRDialer(wxMDIParentFrame* parent, const char* title, size_t account_ix) :
+		WChildFrame(
+			WChildProp
+			{
+				.parent = parent,
+				.title = title,
+				.pos = wxDefaultPosition,
+				.size = wxSize(600, 450),
+				.style = wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX),
+				.form_columns = 2,
+				.has_tree = true
+			}),
+		tree_(nullptr),
+		//id_(nullptr),
+		//ucode_(nullptr),
+		mobile_(nullptr),
+		status_(nullptr),
+		new_button_(nullptr),
+		call_button_(nullptr),
+		choose_wav_button_(nullptr),
+		stop_button_(nullptr),
+		save_button_(nullptr),
+		cancel_button_(nullptr),
+		playback_button_(nullptr),
+		cm_button_(nullptr),
+		data_(),
+		current_call_(-1),
+		account_ix_(account_ix),
+		cached_sip_id_(ConfigSettings::instance().sip_accounts.front().sip_id)
+
+	{
+		on_init_filter_controls_();
+		on_init_input_controls_();
+		on_init_tree_();
+		on_init_buttons_();
+		update_components_state_();
+		this->Bind(wxEVT_CLOSE_WINDOW, &WRDialer::on_win_close_, this);
+
+		ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::string(title) + " - Ready to Call...", eg::ad3::ServiceData::Type::INFO);
+
+		filter_.is_auto = true;
+		populate_master_();
+
+		Show(true);
+	}
+
+	void WRDialer::update_components_from_data_()
+	{
+		if (filter_.selected_status)
+		{
+			filter_to_call_count_->ChangeValue(std::to_string(filter_.selected_status->to_call_count()));
+		}
+		else
+		{
+			filter_to_call_count_->ChangeValue("0");
+		}
+
+		mobile_->ChangeValue(data_.mobile);
+		name_->ChangeValue(data_.name);
+		status_->ChangeValue(data_.status);
+		remarks_->ChangeValue(data_.remarks);
+
+		if (data_.has_confirmed_status())
+		{
+			//file_recording_->ChangeValue(data_.file_recording);
+		}
+		else
+		{
+			//file_recording_->ChangeValue("");
+		}
+
+		wxTheApp->CallAfter([this]
+			{
+				panel->Layout();
+				panel->Refresh();
+			});
+	}
+
+	void WRDialer::update_components_state_()
+	{
+		switch (data_.state)
+		{
+		case DialerState::New:
+
+			filter_client_->Enable();
+			filter_campaign_->Enable();
+			filter_prio_->Enable();
+			filter_status_->Enable();
+
+			mobile_->Disable();
+			name_->Disable();
+			remarks_->Disable();
+
+			tree_->Enable();
+			playback_button_->Disable();
+			cm_button_->Disable();
+			new_button_->Disable();
+			call_button_->Enable();
+			choose_wav_button_->Enable();
+			stop_button_->Disable();
+			save_button_->Disable();
+			cancel_button_->Enable();
+			break;
+
+		case DialerState::Calling:
+
+			//filter_is_auto_->Disable();
+			filter_client_->Disable();
+			filter_campaign_->Disable();
+			filter_prio_->Disable();
+			filter_status_->Disable();
+
+			mobile_->Disable();
+			name_->Disable();
+			remarks_->Disable();
+			tree_->Disable();
+
+			playback_button_->Disable();
+			cm_button_->Disable();
+
+			new_button_->Disable();
+			call_button_->Disable();
+			choose_wav_button_->Disable();
+			stop_button_->Enable();
+			save_button_->Disable();
+			cancel_button_->Disable();
+			break;
+
+		case DialerState::Stopping:
+
+			//filter_is_auto_->Disable();
+			filter_client_->Disable();
+			filter_campaign_->Disable();
+			filter_prio_->Disable();
+			filter_status_->Disable();
+
+			//id_->Disable();
+			//ucode_->Disable();
+			mobile_->Disable();
+			name_->Disable();
+			remarks_->Disable();
+			tree_->Disable();
+
+			playback_button_->Disable();
+			cm_button_->Disable();
+
+			new_button_->Disable();
+			call_button_->Disable();
+			choose_wav_button_->Disable();
+			stop_button_->Disable();
+			save_button_->Disable();
+			cancel_button_->Disable();
+
+		case DialerState::JustEnded:
+
+			filter_client_->Enable();
+			filter_campaign_->Enable();
+			filter_prio_->Enable();
+			filter_status_->Enable();
+			remarks_->Disable();
+			new_button_->Disable();
+			choose_wav_button_->Enable();
+
+			mobile_->Disable();
+			name_->Disable();
+
+			tree_->Enable();
+
+			if (ConfigSettings::instance().is_admin)
+			{
+				playback_button_->Enable(data_.has_confirmed_status());
+			}
+			else
+			{
+				playback_button_->Disable();
+			}
+
+			if (data_.id > 0 and data_.collector_id > 0)
+			{
+				cm_button_->Enable();
+			}
+			else
+			{
+				cm_button_->Disable();
+			}
+
+			call_button_->Disable();
+			stop_button_->Disable();
+			save_button_->Enable();
+			cancel_button_->Enable();
+			break;
+
+		case DialerState::PlayingWav:
+
+			//filter_is_auto_->Disable();
+			filter_client_->Disable();
+			filter_campaign_->Disable();
+			filter_prio_->Disable();
+			filter_status_->Disable();
+
+			//id_->Disable();
+			//ucode_->Disable();
+			mobile_->Disable();
+			name_->Disable();
+			remarks_->Disable();
+			tree_->Disable();
+
+			playback_button_->Disable();
+			cm_button_->Disable();
+
+			new_button_->Disable();
+			call_button_->Disable();
+			choose_wav_button_->Disable();
+			stop_button_->Disable();
+			save_button_->Disable();
+			cancel_button_->Disable();
+
+		case DialerState::Saved:
+
+			filter_client_->Enable();
+			filter_campaign_->Enable();
+			filter_prio_->Enable();
+			filter_status_->Enable();
+
+			mobile_->Disable();
+			name_->Disable();
+			remarks_->Disable();
+			tree_->Enable();
+
+			if (ConfigSettings::instance().is_admin)
+			{
+				playback_button_->Enable(data_.has_confirmed_status());
+			}
+			else
+			{
+				playback_button_->Disable();
+			}
+
+			if (data_.id > 0 and data_.collector_id > 0)
+			{
+				cm_button_->Enable();
+			}
+			else
+			{
+				cm_button_->Disable();
+			}
+
+			new_button_->Disable();
+			call_button_->Enable();
+			choose_wav_button_->Disable();
+
+			stop_button_->Disable();
+			save_button_->Disable();
+			cancel_button_->Enable();
+			break;
+		}
+	}
+
+	void WRDialer::on_init_tree_()
+	{
+		std::filesystem::path root_folder(cached_sip_id_);
+		auto root_folder_string = root_folder.string();
+
+		if (not std::filesystem::exists(root_folder))
+		{
+			if (not std::filesystem::create_directory(root_folder))
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::string("Could not create the calls folder: ") + root_folder_string, eg::ad3::ServiceData::Type::ERR);
+				return;
+			}
+		}
+
+		tree_ = register_tree("history", 300);
+		tree_->Bind(wxEVT_TREE_SEL_CHANGED, [this](wxTreeEvent& e)
+			{
+				const auto item_id = e.GetItem();
+
+				auto meta = static_cast<DirMeta*>(tree_->GetItemData(e.GetItem()));
+				if (not meta->is_file and not meta->visited)
+				{
+					meta->visited = true;
+					if (const auto children_count = tree_->GetChildrenCount(item_id); children_count == 0)
+					{
+						this->register_node_elements_(item_id, meta->path);
+
+						if (tree_->GetChildrenCount(item_id) > 0)
+						{
+							tree_->Expand(item_id);
+						}
+					}
+				}
+
+				else if (meta->is_file)
+				{
+					data_.from_json([&meta]
+						{
+							std::ifstream file(meta->path);
+							return nlohmann::json::parse(file);;
+						}());
+
+					update_components_from_data_();
+					update_components_state_();
+				}
+			});
+
+		const auto root_id = tree_->AddRoot(root_folder_string.c_str(), -1, -1, new DirMeta(root_folder_string.c_str()));
+
+		register_node_elements_(root_id, root_folder_string.c_str());
+	}
+
+	void WRDialer::on_init_buttons_()
+	{
+		new_button_ = register_button("New", wxID_ANY);
+		new_button_->Bind(wxEVT_BUTTON, &WRDialer::on_new_, this);
+		call_button_ = register_button("Call", wxID_ANY);
+		call_button_->Bind(wxEVT_BUTTON, &WRDialer::on_call_, this);
+		choose_wav_button_ = register_button("Select WAV", wxID_ANY);
+		choose_wav_button_->Bind(wxEVT_BUTTON, &WRDialer::on_choose_wav_, this);
+		stop_button_ = register_button("Stop", wxID_ANY);
+		stop_button_->Bind(wxEVT_BUTTON, &WRDialer::on_stop_, this);
+		stop_button_->Disable();
+		save_button_ = register_button("Save", wxID_ANY);
+		save_button_->Bind(wxEVT_BUTTON, &WRDialer::on_save_, this);
+		cancel_button_ = register_button("Cancel", wxID_ANY);
+		cancel_button_->Bind(wxEVT_BUTTON, &WRDialer::on_close_, this);
+	}
+
+	void WRDialer::on_init_filter_controls_()
+	{
+		// Filters
+		filter_wav_filename_ = register_text_input("filter_wav_filename", "WAV Filename:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		filter_client_ = register_dropdown("filter_client", "Select Client:");
+		filter_client_->Bind(wxEVT_CHOICE, [this](wxCommandEvent& e)
+			{
+				void* ptr = e.GetClientData();
+				auto client_id = reinterpret_cast<size_t>(ptr);
+
+				auto fclient = std::find_if(filter_.clients.begin(), filter_.clients.end(), [client_id](const ClientDD& a) -> bool
+					{
+						return a.client_id == client_id;
+					});
+
+				filter_.selected_client = &(*fclient);
+
+				filter_campaign_->Clear();
+				filter_prio_->Clear();
+				filter_status_->Clear();
+
+				filter_.selected_campaign = nullptr;
+				filter_.selected_prio = nullptr;
+				filter_.selected_status = nullptr;
+
+				for (const auto& [campaign_id, _] : fclient->campaigns)
+				{
+					filter_campaign_->Append(filter_.campaign_master.at(campaign_id), reinterpret_cast<void*>(campaign_id));
+				}
+
+				data_.clear();
+				filter_to_call_count_->ChangeValue("0");
+				data_.ucode = "";
+				//ucode_->ChangeValue("");
+				wxTheApp->CallAfter([this]
+					{
+						panel->Layout();
+						panel->Refresh();
+					});
+				//update_components_from_data_();
+			});
+
+		filter_campaign_ = register_dropdown("filter_client_campaign", "Select Campaign:");
+		filter_campaign_->Bind(wxEVT_CHOICE, [this](wxCommandEvent& e)
+			{
+				void* ptr = e.GetClientData();
+				auto campaign_id = reinterpret_cast<size_t>(ptr);
+
+				auto fcampaign = std::find_if(filter_.selected_client->campaigns.begin(), filter_.selected_client->campaigns.end(), [campaign_id](const CampaignDD& a) -> bool
+					{
+						return a.campaign_id == campaign_id;
+					});
+
+				filter_.selected_campaign = &(*fcampaign);
+
+				filter_prio_->Clear();
+				filter_status_->Clear();
+				filter_.selected_prio = nullptr;
+				filter_.selected_status = nullptr;
+
+				for (const auto& [prio_id, _] : fcampaign->prios)
+				{
+					filter_prio_->Append(filter_.prio_master.at(prio_id), reinterpret_cast<void*>(prio_id));
+				}
+
+				data_.clear();
+				filter_to_call_count_->ChangeValue("0");
+				data_.ucode = "";
+				//ucode_->ChangeValue("");
+				wxTheApp->CallAfter([this]
+					{
+						panel->Layout();
+						panel->Refresh();
+					});
+				//update_components_from_data_();
+			});
+
+		filter_prio_ = register_dropdown("filter_prio", "Select Prio:");
+		filter_prio_->Bind(wxEVT_CHOICE, [this](wxCommandEvent& e)
+			{
+				void* ptr = e.GetClientData();
+				auto prio_id = reinterpret_cast<size_t>(ptr);
+				auto fprio = std::find_if(filter_.selected_campaign->prios.begin(), filter_.selected_campaign->prios.end(), [prio_id](const PrioDD& a) -> bool
+					{
+						return a.prio_id == prio_id;
+					});
+
+				filter_.selected_prio = &(*fprio);
+
+				filter_status_->Clear();
+				filter_.selected_status = nullptr;
+
+				for (const auto& [status_id, _, __, ___, ____, _____, ______, _______] : fprio->status_series)
+				{
+					filter_status_->Append(filter_.status_master.at(status_id), reinterpret_cast<void*>(status_id));
+				}
+
+				data_.clear();
+				filter_to_call_count_->ChangeValue("0");
+				data_.ucode = "";
+				//ucode_->ChangeValue("");
+				wxTheApp->CallAfter([this]
+					{
+						panel->Layout();
+						panel->Refresh();
+					});
+				//update_components_from_data_();
+			});
+
+		filter_status_ = register_dropdown("filter_status", "Select Status:");
+		filter_status_->Bind(wxEVT_CHOICE, [this](wxCommandEvent& e)
+			{
+				void* ptr = e.GetClientData();
+				auto status_id = reinterpret_cast<size_t>(ptr);
+				auto fstatus = std::find_if(filter_.selected_prio->status_series.begin(), filter_.selected_prio->status_series.end(), [status_id](const StatusSeriesDD& a) -> bool
+					{
+						return a.status_id == status_id;
+					});
+
+				filter_.selected_status = &(*fstatus);
+
+				filter_to_call_count_->SetValue(std::to_string(filter_.selected_status->to_call_count()));
+
+				data_.clear();
+				data_.ucode = filter_.selected_status->ucode;
+				data_.collector_id = filter_.selected_status->collector_id;
+				update_components_from_data_();
+			});
+
+		filter_to_call_count_ = register_text_input("to_call_count", "To Call Count:", "0", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	}
+
+	void WRDialer::on_init_input_controls_()
+	{
+		// Fields
+		//register_text("Call details", 300);
+		//id_ = register_text_input("id", "CM ID:", std::to_string(data_.id));
+		//ucode_ = register_text_input("ucode", "Code:", data_.ucode);
+		//register_text("Please input mobile in the following format: 0XXXYYYZZZZ i.e. 09177101995.", 300);
+		mobile_ = register_text_input("mobile", "Mobile to dial:", "");
+		mobile_->SetHint("09177101995");
+		name_ = register_text_input("name", "Name:", "");
+		name_->SetHint("Juan dela Cruz");
+		status_ = register_text_input("status", "Last Status:", "PJSIP_INV_STATE_NULL", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		//time_of_call_ = register_text_input("time_of_call", "Time of Call:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		//time_call_ended_ = register_text_input("time_call_ended", "Time Call Ended:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		remarks_ = register_text_input_multi("remarks", "Remarks:", 1, "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		//remarks_->SetHint("Enter details of your conversation here...");
+		//file_recording_ = register_text_input("wav_recording", "Playback file:", "", wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+		playback_button_ = register_button_field("Play");
+		playback_button_->Bind(wxEVT_BUTTON, &WRDialer::on_playback_, this);
+		cm_button_ = register_button_field("Open CRM");
+		cm_button_->Bind(wxEVT_BUTTON, &WRDialer::on_cm_, this);
+	}
+
+	void WRDialer::register_node_elements_(const wxTreeItemId& node_id, const std::string& path)
+	{
+		for (const auto& entry : std::filesystem::directory_iterator(path))
+		{
+			const auto p = entry.path();
+			tree_->AppendItem(node_id, p.filename().string(), -1, -1, new DirMeta(p.string(), std::filesystem::is_regular_file(p)));
+		}
+	}
+
+	void WRDialer::on_call_state_changed_(pjsip_inv_state state, pj::CallInfo info, bool hangup_requested)
+	{
+		wxTheApp->CallAfter([this, state, info, hangup_requested]
+			{
+				switch (state)
+				{
+				case PJSIP_INV_STATE_CALLING:
+					//LOG_II("Calling call to {}", data_.mobile);
+
+					data_.status = "PJSIP_INV_STATE_CALLING";
+					break;
+
+				case PJSIP_INV_STATE_INCOMING:
+					//LOG_II("Incoming call to {}", data_.mobile);
+
+					data_.status = "PJSIP_INV_STATE_INCOMING";
+					break;
+
+				case PJSIP_INV_STATE_EARLY:
+					LOG_II("PJSIP_INV_STATE_EARLY {}", current_call_);
+
+					data_.status = "PJSIP_INV_STATE_EARLY";
+					break;
+
+				case PJSIP_INV_STATE_CONNECTING:
+					//LOG_II("Connecting call to {}", data_.mobile);
+
+					data_.status = "PJSIP_INV_STATE_CONNECTING";
+					break;
+
+				case PJSIP_INV_STATE_CONFIRMED:
+				{
+					LOG_II("PJSIP_INV_STATE_CONFIRMED {}", current_call_);
+					//LOG_II("Confirmed call to {}", data_.mobile);
+					data_.status = "PJSIP_INV_STATE_CONFIRMED";
+					//ServicePJRoboCalls::instance().hangup_all_calls_except(current_call_);
+					ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("{} Answered the call... Playing recorded wav.", data_.name), eg::ad3::ServiceData::Type::ATTENTION);
+					data_.call_confirmed = time(nullptr);
+
+					wxTheApp->CallAfter([this]()
+						{
+							Raise();        // bring window to front
+						});
+
+					break;
+				}
+				case PJSIP_INV_STATE_DISCONNECTED:
+				{
+					LOG_II("PJSIP_INV_STATE_DISCONNECTED {}", current_call_);
+					ServicePJRoboCalls::instance().remove_call(current_call_);
+					current_call_ = -1;
+
+					if (data_.uploader_contact_id > 0)
+					{
+						if (data_.status not_eq "PJSIP_INV_STATE_CONFIRMED")
+						{
+							const auto& settings = ConfigSettings::instance();
+							auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+								settings.db_driver,
+								settings.db_server,
+								settings.db_database,
+								settings.db_user,
+								settings.db_password);
+
+							nanodbc::connection conn(NANODBC_TEXT(db_conn));
+
+							if (not conn.connected())
+							{
+								ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
+								return;
+							}
+
+							nanodbc::statement stmt(conn);
+							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
+
+							const auto remarks = [&info, &settings, this]
+								{
+									if (info.lastStatusCode == PJSIP_SC_BUSY_HERE or info.lastStatusCode == PJSIP_SC_BUSY_EVERYWHERE)
+									{
+										if (settings.number_masking)
+										{
+											return std::format("ROBO DIALER: Attempted to call {} but number is Busy.", DialerData::masked_mobile(data_.mobile));
+										}
+
+										return std::format("ROBO DIALER: Attempted to call {} but number is Busy.", data_.mobile);
+									}
+
+									else if (info.lastStatusCode == PJSIP_SC_REQUEST_TIMEOUT or info.lastStatusCode == PJSIP_SC_TEMPORARILY_UNAVAILABLE)
+									{
+										if (settings.number_masking)
+										{
+											return std::format("ROBO DIALER: Attempted to call {} but callee did not answer.", DialerData::masked_mobile(data_.mobile));
+										}
+										return std::format("ROBO DIALER: Attempted to call {} but callee did not answer.", data_.mobile);
+									}
+
+									if (settings.number_masking)
+									{
+										return std::format("ROBO DIALER: Attempted to call {} but call did not connect.", DialerData::masked_mobile(data_.mobile));
+									}
+									return std::format("ROBO DIALER: Attempted to call {} but call did not connect.", data_.mobile);
+								}();
+
+							const auto status = [&info, this] -> std::string
+								{
+									if (info.lastStatusCode == PJSIP_SC_BUSY_HERE or info.lastStatusCode == PJSIP_SC_BUSY_EVERYWHERE)
+									{
+										return "BUSY";
+									}
+
+									else if (info.lastStatusCode == PJSIP_SC_REQUEST_TIMEOUT or info.lastStatusCode == PJSIP_SC_TEMPORARILY_UNAVAILABLE)
+									{
+										return "TIMEOUT";
+									}
+
+									return "NOANSWER";
+								}();
+
+							const size_t uploader_contact_id = 0;
+
+							stmt.bind(0, &data_.id);
+							stmt.bind(1, &data_.collector_id);
+							stmt.bind(2, remarks.c_str(), remarks.size());
+							stmt.bind(3, &uploader_contact_id);
+							stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
+							stmt.bind(5, status.c_str(), status.size());
+
+							nanodbc::result res = nanodbc::execute(stmt);
+						}
+						else
+						{
+							data_.call_ended = time(nullptr);
+							auto time_elapsed = data_.call_ended - data_.call_confirmed;
+							const auto& settings = ConfigSettings::instance();
+							auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+								settings.db_driver,
+								settings.db_server,
+								settings.db_database,
+								settings.db_user,
+								settings.db_password);
+
+							nanodbc::connection conn(NANODBC_TEXT(db_conn));
+
+							if (not conn.connected())
+							{
+								ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
+
+								return;
+							}
+
+							nanodbc::statement stmt(conn);
+							prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_crm_comment_ad3(?, ?, ?, ?, ?, ?)}"));
+
+							auto mobile = settings.number_masking ? DialerData::masked_mobile(data_.mobile) : data_.mobile;
+							const std::string remarks = std::format("Called {} Robo Play Time: {}s Playback: {}", mobile, static_cast<size_t>(time_elapsed), data_.file_recording);
+
+							const size_t uploader_contact_id = 0;
+							stmt.bind(0, &data_.id);
+							stmt.bind(1, &data_.collector_id);
+							stmt.bind(2, remarks.c_str(), remarks.size());
+							stmt.bind(3, &uploader_contact_id);
+							stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
+							stmt.bind(5, data_.status.c_str(), data_.status.size());
+
+							nanodbc::result res = nanodbc::execute(stmt);
+						}
+					}
+
+					auto should_stop_auto = (data_.state == DialerState::Stopping or hangup_requested);
+
+					{
+						current_call_ = -1;
+						data_.time_call_ended = eg::string::datetime_to_formatted_string();
+						data_.state = DialerState::JustEnded;
+						//time_call_ended_->SetValue(data_.time_call_ended);
+
+						if (data_.has_confirmed_status())
+						{
+							//file_recording_->SetValue(data_.file_recording);
+						}
+					}
+
+					save_();
+
+					if (not should_stop_auto)
+					{
+						on_call_auto_(data_.redial);
+					}
+
+					update_components_state_();
+
+					break;
+				}
+
+				default:
+					break;
+				}
+
+				status_->SetValue(data_.status);
+			});
+	}
+
+	void WRDialer::on_call_(wxCommandEvent&)
+	{
+		const auto [in, out] = ServicePJEndpoint::instance().get_in_out_count();
+
+		if (in == 0)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Can't call because NO MIC is detected.", eg::ad3::ServiceData::Type::ERR);
+			return;
+		}
+
+		if (out == 0)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Can't call because NO SPEAKER is detected.", eg::ad3::ServiceData::Type::ERR);
+			return;
+		}
+
+		if (data_.file_player.empty())
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Please select a valid .wav file to play!", eg::ad3::ServiceData::Type::ERR);
+			return;
+		}
+
+		if (filter_.selected_client == nullptr or filter_.selected_campaign == nullptr or filter_.selected_prio == nullptr or filter_.selected_status == nullptr)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Please select Client, Campaign, Prio, and Status before calling.", eg::ad3::ServiceData::Type::ERR);
+			return;
+		}
+
+		if (filter_.selected_status->to_call_count() == 0)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::ERR);
+			return;
+		}
+
+		on_call_auto_(0);
+	}
+
+	void WRDialer::on_call_auto_(size_t redial)
+	{
+		if (redial == 0)
+		{
+			if (filter_.selected_status->to_call_count() == 0)
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::INFO);
+				return;
+			}
+
+			const auto& settings = ConfigSettings::instance();
+			auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+				settings.db_driver,
+				settings.db_server,
+				settings.db_database,
+				settings.db_user,
+				settings.db_password);
+
+			nanodbc::connection conn(NANODBC_TEXT(db_conn));
+
+			if (not conn.connected())
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
+				return;
+			}
+
+			// Get the next ID from DB instead of cache since multiple windows or a different PC can be used to call
+			// the same CM
+
+			{
+				nanodbc::statement stmt(conn);
+				prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_get_next_id_robo(?)}"));
+				stmt.bind(0, &filter_.selected_status->cache_id);
+
+				nanodbc::result results = nanodbc::execute(stmt);
+
+				if (results.next())
+				{
+					auto next_id = results.get<int>(0);
+					if (next_id == -1 or next_id > filter_.selected_status->max_id)
+					{
+						filter_.selected_status->next_id = filter_.selected_status->min_id;
+
+						//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+						ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::WARNING);
+
+						update_components_from_data_();
+						return;
+					}
+					else
+					{
+						filter_.selected_status->next_id = next_id + 1;
+					}
+				}
+
+				if (filter_.selected_status->next_id > filter_.selected_status->max_id)
+				{
+					ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::WARNING);
+					update_components_from_data_();
+					return;
+				}
+			}
+
+			const auto retrieve_sql = std::format("select a.cm_id, a.contact_name, a.mobile, a.remarks, a.collector_id, a.uploader_contact_id from vw_ad_lr_priority_new_robo as a where next_id = {}", filter_.selected_status->next_id);
+
+			nanodbc::result results = nanodbc::execute(
+				conn,
+				NANODBC_TEXT(retrieve_sql));
+
+			data_.clear();
+
+			if (results.next())
+			{
+				data_.id = results.get<size_t>(0);
+				data_.name = results.get<std::string>(1);
+				data_.mobile = results.get<std::string>(2);
+				data_.remarks = results.get<std::string>(3);
+				data_.collector_id = filter_.selected_status->collector_id; // results.get<size_t>(4);
+				data_.uploader_contact_id = results.get<size_t>(5);
+				data_.ucode = filter_.selected_status->ucode;
+				data_.redial = ConfigSettings::instance().redial;
+
+				if (data_.redial > 0)
+				{
+					data_.redial = data_.redial - 1;
+				}
+
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Dialing {} {} {} ({})", data_.ucode, data_.name, data_.mobile, data_.redial), eg::ad3::ServiceData::Type::INFO);
+
+				update_components_from_data_();
+			}
+			else
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No record retrieved.", eg::ad3::ServiceData::Type::WARNING);
+
+				return;
+			}
+
+			const auto validated_name = DialerData::trimmed_name(data_.name);
+
+			call_proper_(validated_name);
+		}
+
+		// Redial
+		else
+		{
+			if (redial > 0)
+			{
+				data_.redial = redial - 1;
+			}
+			else
+
+			{
+				data_.redial = 0;
+			}
+
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Redialing {} {} {} ({})", data_.ucode, data_.name, data_.mobile, data_.redial), eg::ad3::ServiceData::Type::INFO);
+
+			const auto validated_name = DialerData::trimmed_name(data_.name);
+			call_proper_(validated_name);
+		}
+	}
+
+	void WRDialer::call_proper_(const std::string& validated_name)
+	{
+		{
+			if (current_call_ >= 0)
+			{
+				//wxMessageBox("There is already an ongoing call.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "There is already an ongoing call.", eg::ad3::ServiceData::Type::ERR);
+				return;
+			}
+
+			auto& calls = ServicePJRoboCalls::instance();
+			data_.file_recording = generate_wav_filename(data_.mobile, validated_name, cached_sip_id_);
+
+			//LOG_II("Calling {} {}", account_ix_, data_.file_recording);
+
+			current_call_ = calls.make_call(
+				std::bind(&WRDialer::on_call_state_changed_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+				data_.file_recording,
+				data_.file_player,
+				data_.mobile,
+				account_ix_);
+
+			//LOG_II("1");
+
+			if (current_call_ < 0)
+			{
+				//wxMessageBox("Could not make the call until active call is stopped.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Could not make the call until active call is stopped.", eg::ad3::ServiceData::Type::ERR);
+
+				current_call_ = -1;
+				return;
+			}
+		}
+		//LOG_II("2");
+
+		data_.time_of_call = eg::string::datetime_to_formatted_string();
+		//time_of_call_->ChangeValue(data_.time_of_call);
+		data_.state = DialerState::Calling;
+
+		//LOG_II("3");
+
+		update_components_state_();
+
+		//LOG_II("4");
+	}
+
+	void WRDialer::on_choose_wav_(wxCommandEvent& e)
+	{
+		const wxString wildcard = "WAV files (*.wav)|*.wav|All files (*.*)|*.*";
+		wxFileDialog openFileDialog(this, "Choose WAV file", "", "", wildcard, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+		if (openFileDialog.ShowModal() == wxID_CANCEL)
+		{
+			return;
+		}
+
+		auto player_filename = openFileDialog.GetPath().ToStdString();
+		filter_wav_filename_->SetValue(player_filename);
+		data_.file_player = player_filename;
+	}
+
+	void WRDialer::on_new_(wxCommandEvent&)
+	{
+		data_.clear();
+
+		update_components_from_data_();
+		update_components_state_();
+	}
+
+	void WRDialer::on_stop_(wxCommandEvent&)
+	{
+		{
+			ServicePJRoboCalls::instance().hangup_and_remove_call(current_call_);
+		}
+
+		data_.state = DialerState::Stopping;
+
+		update_components_state_();
+	}
+
+	const char* WRDialer::update_data_from_components_()
+	{
+		const auto validated_mobile = DialerData::validated_mobile(mobile_->GetValue().ToStdString());
+		if (validated_mobile.empty())
+		{
+			return "Invalid mobile number format!";
+		}
+
+		const auto name = name_->GetValue().ToStdString();
+		const auto validated_name = DialerData::trimmed_name(name);
+		if (validated_name.empty())
+		{
+			return "Name is invalid.";
+		}
+
+		data_.mobile = validated_mobile;
+		data_.name = name;
+		data_.status = status_->GetValue().ToStdString();
+		//data_.time_of_call = time_of_call_->GetValue().ToStdString();
+		//data_.time_call_ended = time_call_ended_->GetValue().ToStdString();
+		data_.remarks = remarks_->GetValue().ToStdString();
+
+		return nullptr;
+	}
+
+	void WRDialer::on_save_(wxCommandEvent&)
+	{
+		// Validation
+
+		if (const auto err = update_data_from_components_(); err not_eq nullptr)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), err, eg::ad3::ServiceData::Type::ERR);
+
+			return;
+		}
+
+		if (data_.time_call_ended.empty())
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Cannot save a record that has not been called.", eg::ad3::ServiceData::Type::ERR);
+
+			return;
+		}
+
+		save_();
+
+		update_components_state_();
+
+		ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Call record saved", eg::ad3::ServiceData::Type::INFO);
+	}
+
+	void WRDialer::save_()
+	{
+		const auto [meta_folder, yyyy, mm, dd] = generate_meta_folder();
+		if (const auto path = std::filesystem::path(meta_folder);
+			not std::filesystem::exists(path))
+		{
+			if (not std::filesystem::create_directories(path))
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Could not create the directory to save the file.", eg::ad3::ServiceData::Type::ERR);
+				return;
+			}
+		}
+
+		const auto& config = ConfigSettings::instance();
+
+		const auto filename = std::format("{}/{}_{}_{}.json", meta_folder, DialerData::trimmed_name(data_.name), config.number_masking ? DialerData::masked_mobile(data_.mobile) : data_.mobile, std::time(nullptr));
+
+		std::filesystem::path src(data_.file_recording);
+
+		if (not std::filesystem::exists(src))
+		{
+			data_.file_recording = "";
+		}
+
+		data_.save(filename);
+
+		add_item_expand_(yyyy, mm, dd, std::filesystem::path(filename).filename().string());
+
+		update_components_state_();
+
+		// Save recordings to central
+
+		if (not config.playback_central_path.empty() and
+			not data_.file_recording.empty() and
+			not config.ftp_server.empty())
+		{
+			// Src/Dest Path;
+
+			// wav_path = ""ftp:://127.0.0.1/ad3/Answered/record/1234/xxx_yyy_zzz_00000000000_tttttttt.wav"
+			const auto wav_path = config.ftp_server + "/" + config.ftp_root_folder + "/" + data_.file_recording;
+
+			// json_path = ""ftp:://127.0.0.1/ad3/Answered/calls/1234/yyyy/mm/dd/ucode/xxx_yyy_zzz_0000000000_tttttttt.json"
+			const auto json_path = config.ftp_server + "/" + std::format("{}/{}/{}", config.ftp_root_folder, k_calls_folder, filename);
+
+			// Uplod Files
+			if (not eg::ftp::ServiceFTP::upload
+			(
+				data_.file_recording,
+				wav_path,
+				std::format("{}:{}", config.ftp_user, config.ftp_password)
+			))
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Could not upload the wav file.", eg::ad3::ServiceData::Type::ERR);
+				return;
+			}
+
+			if (not eg::ftp::ServiceFTP::upload
+			(
+				filename,
+				json_path,
+				std::format("{}:{}", config.ftp_user, config.ftp_password)
+			))
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Could not upload the json file.", eg::ad3::ServiceData::Type::ERR);
+				return;
+			}
+		}
+	}
+
+	std::string WRDialer::generate_wav_filename(const std::string& validated_mobile, const std::string& validated_name, const std::string& cached_sip_id)
+	{
+		const auto& config = ConfigSettings::instance(); // ensure settings is loaded
+
+		const auto t = std::time(nullptr);
+		const auto tm = *std::localtime(&t);
+		//LOG_II("masking {}", config.number_masking ? "true" : "false");
+
+		return std::format("{}/{}/{}_{}_{}.wav", k_record_folder, cached_sip_id, validated_name, config.number_masking ? DialerData::masked_mobile(validated_mobile) : validated_mobile, t);
+	}
+
+	std::tuple<std::string, std::string, std::string, std::string> WRDialer::generate_meta_folder()
+	{
+		const auto t = std::time(nullptr);
+		const auto tm = *std::localtime(&t);
+		auto yyyy = std::format("{:04}", tm.tm_year + 1900);
+		auto mm = std::format("{:02}", tm.tm_mon + 1);
+		auto dd = std::format("{:02}", tm.tm_mday);
+		return { std::format("{}/{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd, (data_.ucode.empty() ? "NA" : data_.ucode)), yyyy, mm, dd };
+	}
+
+	void WRDialer::add_item_expand_(const std::string& yyyy, const std::string& mm, const std::string& dd, const std::string& file)
+	{
+		auto item_exists = [this](wxTreeItemId& parent_id, const wxString& text) -> wxTreeItemId
+			{
+				wxTreeItemIdValue cookie;
+				auto child = tree_->GetFirstChild(parent_id, cookie);
+				while (child.IsOk())
+				{
+					if (tree_->GetItemText(child) == text)
+					{
+						return child;
+					}
+
+					child = tree_->GetNextChild(parent_id, cookie);
+				}
+
+				return parent_id;
+			};
+
+		auto root_id = tree_->GetRootItem();
+
+		auto fyyyy = item_exists(root_id, yyyy);
+		if (fyyyy == root_id)
+		{
+			fyyyy = tree_->AppendItem(root_id, yyyy, -1, -1, new DirMeta(std::format("{}/{}", cached_sip_id_, yyyy)));
+		}
+
+		auto fmm = item_exists(fyyyy, mm);
+		if (fmm == fyyyy)
+		{
+			fmm = tree_->AppendItem(fyyyy, mm, -1, -1, new DirMeta(std::format("{}/{}/{}", cached_sip_id_, yyyy, mm)));
+		}
+
+		auto fdd = item_exists(fmm, dd);
+		if (fdd == fmm)
+		{
+			fdd = tree_->AppendItem(fmm, dd, -1, -1, new DirMeta(std::format("{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd)));
+		}
+
+		auto tucode = (data_.ucode.empty() ? std::string("NA") : data_.ucode);
+		auto ucode = item_exists(fdd, tucode);
+		if (ucode == fdd)
+		{
+			ucode = tree_->AppendItem(fdd, tucode, -1, -1, new DirMeta(std::format("{}/{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd, tucode)));
+		}
+
+		if (auto item_data = dynamic_cast<DirMeta*>(tree_->GetItemData(ucode)); not item_data->visited)
+		{
+			register_node_elements_(ucode, std::format("{}/{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd, tucode));
+			auto file_id = item_exists(ucode, file);
+			tree_->SelectItem(file_id);
+			item_data->visited = true;
+		}
+		else
+		{
+			auto file_id = tree_->AppendItem(ucode, file, -1, -1, new DirMeta(std::format("{}/{}/{}/{}/{}/{}", cached_sip_id_, yyyy, mm, dd, tucode, file), true));
+			tree_->SelectItem(file_id);
+		}
+
+		tree_->Expand(root_id);
+		tree_->Expand(fyyyy);
+		tree_->Expand(fmm);
+		tree_->Expand(fdd);
+		tree_->Expand(ucode);
+	}
+
+	void WRDialer::on_win_close_(wxCloseEvent& event)
+	{
+		if (current_call_ >= 0)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "There's an ongoing call. Stop / End the call first.", eg::ad3::ServiceData::Type::ERR);
+			event.Veto();
+			return;
+		}
+
+		if (data_.state == DialerState::JustEnded)
+		{
+			save_();
+		}
+
+		Destroy();
+	}
+
+	void WRDialer::on_close_(wxCommandEvent&)
+	{
+		if (current_call_ >= 0)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "There's an ongoing call. Stop / End the call first.", eg::ad3::ServiceData::Type::ERR);
+
+			return;
+		}
+
+		if (data_.state == DialerState::JustEnded)
+		{
+			save_();
+		}
+
+		Close(true);
+	}
+
+	void WRDialer::on_playback_(wxCommandEvent&)
+	{
+		auto orig_state = data_.state;
+		data_.state = DialerState::PlayingWav;
+		wxTheApp->CallAfter([this, orig_state] {
+			update_components_state_();
+
+			// Stupidly Blocking
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("{}/{}", ConfigSettings::instance().playback_central_path, data_.file_recording), eg::ad3::ServiceData::Type::ATTENTION);
+
+			auto result = ServicePJRoboCalls::instance().play_wav(std::format("{}/{}", ConfigSettings::instance().playback_central_path, data_.file_recording));
+
+			data_.state = orig_state;
+			update_components_state_();
+			if (not result)
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Cannot play recording when there's an active call.", eg::ad3::ServiceData::Type::ERR);
+
+				return;
+			}
+
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Recording played successfully.", eg::ad3::ServiceData::Type::INFO);
+			});
+	}
+
+	void WRDialer::on_cm_(wxCommandEvent&)
+	{
+		if (data_.id == 0 or data_.collector_id == 0)
+		{
+			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No CM associated with this call", eg::ad3::ServiceData::Type::ERR);
+
+			return;
+		}
+
+		const auto& settings = ConfigSettings::instance();
+		eg::sys::run(settings.fycrm_path, std::format("{},{}", data_.collector_id, data_.id));
+	}
+
+	void WRDialer::populate_master_()
+	{
+		if (filter_.client_master.empty())
+		{
+			//LOG_II("1");
+			const auto& settings = ConfigSettings::instance();
+			auto db_conn = std::format("Driver={};Server={};Database={};UID={};PWD={};",
+				settings.db_driver,
+				settings.db_server,
+				settings.db_database,
+				settings.db_user,
+				settings.db_password);
+			nanodbc::connection conn(NANODBC_TEXT(db_conn));
+
+			//LOG_II("2");
+
+			if (not conn.connected())
+			{
+				ServiceMsg::instance().log(this->GetTitle().ToStdString(), std::format("Could not connect to database: {}", db_conn), eg::ad3::ServiceData::Type::ERR);
+
+				Close(true);
+				return;
+			}
+
+			//LOG_II("3");
+			auto sql = std::format("select	a.collector_id, a.client_id, a.client_name, a.client_campaign_id, a.client_campaign_name, a.prio_type_id, a.prio_type, a.status_id, a.status_name, a.name, a.min_id, a.max_id, a.next_id, a.ucode, a.common_pool, a.cache_id "
+				"from	vw_ad_cache_priority_series_new_robo as a order by a.client_name, a.client_campaign_name, a.prio_type, a.status_name");
+			nanodbc::result results = nanodbc::execute(
+				conn,
+				NANODBC_TEXT(sql));
+
+			auto last_client_id = 0;
+			auto last_client_campaign_id = 0;
+			auto last_prio_type_id = -1;
+			auto last_client_status_id = 0;
+
+			//LOG_II("4");
+			while (results.next())
+			{
+				// Save to Master file:
+
+				//LOG_II("5");
+
+				if (const auto client_id = results.get<size_t>(1);
+					client_id not_eq last_client_id)
+				{
+					filter_.client_master.try_emplace(client_id, results.get<std::string>(2));
+					last_client_id = client_id;
+					last_client_campaign_id = 0;
+					last_prio_type_id = -1;
+					last_client_status_id = 0;
+					filter_.clients.emplace_back(client_id);
+				}
+
+				//LOG_II("6");
+
+				if (const auto client_campaign_id = results.get<size_t>(3);
+					client_campaign_id not_eq last_client_campaign_id)
+				{
+					filter_.campaign_master.try_emplace(client_campaign_id, results.get<std::string>(4));
+					last_client_campaign_id = client_campaign_id;
+					last_prio_type_id = -1;
+					last_client_status_id = 0;
+					filter_.clients.back().campaigns.emplace_back(client_campaign_id);
+				}
+
+				//LOG_II("7");
+
+				if (const auto prio_type_id = results.get<size_t>(5);
+					prio_type_id not_eq last_prio_type_id)
+				{
+					filter_.prio_master.try_emplace(prio_type_id, results.get<std::string>(6));
+					last_prio_type_id = prio_type_id;
+					filter_.clients.back().campaigns.back().prios.emplace_back(prio_type_id);
+					//LOG_II("size: {}", filter_.clients.back().campaigns.back().prios.size());
+				}
+
+				//LOG_II("8");
+
+				last_client_status_id = results.get<size_t>(7);
+				filter_.status_master.try_emplace(last_client_status_id, results.get<std::string>(8));
+
+				//LOG_II("9");
+
+				//if (filter_.clients.empty())
+				//{
+				//	LOG_II("10");
+				//}
+
+				//if (filter_.clients.back().campaigns.empty())
+				//{
+				//	LOG_II("11");
+				//}
+
+				//if (filter_.clients.back().campaigns.back().prios.empty())
+				//{
+				//	LOG_II("12");
+				//}
+
+				filter_.clients.back().campaigns.back().prios.back().status_series.emplace_back(
+					last_client_status_id,
+					results.get<size_t>(10),
+					results.get<size_t>(11),
+					results.get<size_t>(12),
+					results.get<std::string>(13),
+					results.get<int>(14),
+					results.get<int>(15),
+					results.get<size_t>(0)
+				);
+			}
+
+			//LOG_II("End");
+
+			for (const auto& [id, name] : filter_.client_master)
+			{
+				filter_client_->Append(name, reinterpret_cast<void*>(id));
+			}
+			//LOG_II("End2");
+		}
+	}
+}

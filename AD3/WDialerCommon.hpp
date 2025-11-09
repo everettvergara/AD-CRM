@@ -112,6 +112,7 @@ namespace eg::ad3
 		std::string time_call_ended;
 		std::string remarks;
 		std::string file_recording;
+		std::string file_player;
 		size_t collector_id;
 		size_t uploader_contact_id;
 		time_t call_confirmed;

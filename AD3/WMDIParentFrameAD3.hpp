@@ -4,6 +4,7 @@
 
 #include "WConfigSettings.hpp"
 #include "WDialer.h"
+#include "WRDialer.h"
 #include "resource.h"
 #include "ServicePJAccount.h"
 #include "ConfigSettings.hpp"
@@ -44,6 +45,16 @@ namespace eg::ad3
 			{
 				auto* admin_menu = new wxMenu();
 				register_sub_menu(admin_menu, next_menu_id(), "Recordings", &WMDIParentFrameAD3::on_admin_recordings, this);
+
+				auto* robo_menu = new wxMenu();
+				register_sub_menu(robo_menu, next_menu_id(), "Robo - 1", &WMDIParentFrameAD3::on_robo_dialer1, this);
+				register_sub_menu(robo_menu, next_menu_id(), "Robo - 2", &WMDIParentFrameAD3::on_robo_dialer2, this);
+				register_sub_menu(robo_menu, next_menu_id(), "Robo - 3", &WMDIParentFrameAD3::on_robo_dialer3, this);
+				register_sub_menu(robo_menu, next_menu_id(), "Robo - 4", &WMDIParentFrameAD3::on_robo_dialer4, this);
+				register_sub_menu(robo_menu, next_menu_id(), "Robo - 5", &WMDIParentFrameAD3::on_robo_dialer5, this);
+				register_sub_menu(robo_menu, next_menu_id(), "Robo - 6", &WMDIParentFrameAD3::on_robo_dialer6, this);
+
+				menu->Append(robo_menu, "&Robo");
 				menu->Append(admin_menu, "&Admin");
 			}
 		}
@@ -156,7 +167,6 @@ namespace eg::ad3
 			if (not is_child_active(id))
 			{
 				auto ix = 3 % ConfigSettings::instance().max_ep();
-				//LOG_II("Account index: 3: {}", ix);
 
 				auto child = new WDialer(this, "Dialer - D", ix);
 				child_ids[id] = child;
@@ -200,6 +210,132 @@ namespace eg::ad3
 				auto ix = 5 % ConfigSettings::instance().max_ep();
 
 				auto child = new WDialer(this, "Dialer - F", ix);
+				child_ids[id] = child;
+
+				return;
+			}
+		}
+
+		void on_robo_dialer1(wxCommandEvent&)
+		{
+			static constexpr auto id = "robo1";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
+			if (not is_child_active(id))
+			{
+				auto ix = 0 % ConfigSettings::instance().max_ep();
+
+				auto child = new WRDialer(this, "Robo - 1", ix);
+				child_ids[id] = child;
+
+				return;
+			}
+		}
+
+		void on_robo_dialer2(wxCommandEvent&)
+		{
+			static constexpr auto id = "robo2";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
+			if (not is_child_active(id))
+			{
+				auto ix = 1 % ConfigSettings::instance().max_ep();
+
+				auto child = new WRDialer(this, "Robo - 2", ix);
+				child_ids[id] = child;
+
+				return;
+			}
+		}
+
+		void on_robo_dialer3(wxCommandEvent&)
+		{
+			static constexpr auto id = "robo3";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
+			if (not is_child_active(id))
+			{
+				auto ix = 2 % ConfigSettings::instance().max_ep();
+
+				auto child = new WRDialer(this, "Robo - 3", ix);
+				child_ids[id] = child;
+
+				return;
+			}
+		}
+
+		void on_robo_dialer4(wxCommandEvent&)
+		{
+			static constexpr auto id = "robo4";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
+			if (not is_child_active(id))
+			{
+				auto ix = 3 % ConfigSettings::instance().max_ep();
+
+				auto child = new WRDialer(this, "Robo - 4", ix);
+				child_ids[id] = child;
+
+				return;
+			}
+		}
+
+		void on_robo_dialer5(wxCommandEvent&)
+		{
+			static constexpr auto id = "robo5";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
+			if (not is_child_active(id))
+			{
+				auto ix = 4 % ConfigSettings::instance().max_ep();
+
+				auto child = new WRDialer(this, "Robo - 5", ix);
+				child_ids[id] = child;
+
+				return;
+			}
+		}
+
+		void on_robo_dialer6(wxCommandEvent&)
+		{
+			static constexpr auto id = "robo6";
+
+			if (not is_child_active(k_msg_window_id))
+			{
+				auto child = new WMsg(this);
+				child_ids[k_msg_window_id] = child;
+			}
+
+			if (not is_child_active(id))
+			{
+				auto ix = 5 % ConfigSettings::instance().max_ep();
+
+				auto child = new WRDialer(this, "Robo - 6", ix);
 				child_ids[id] = child;
 
 				return;

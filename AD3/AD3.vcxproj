@@ -149,14 +149,17 @@
     <ClCompile Include="ServicePJAccount.cpp" />
     <ClCompile Include="ServicePJCalls.cpp" />
     <ClCompile Include="ServicePJEndpoint.cpp" />
+    <ClCompile Include="ServicePJRoboCalls.cpp" />
     <ClCompile Include="ServicePJWavPool.cpp" />
     <ClCompile Include="WAutoDial.cpp" />
     <ClCompile Include="WChildFrame.cpp" />
     <ClCompile Include="WDialer.cpp" />
     <ClCompile Include="WMDIParentFrame.cpp" />
+    <ClCompile Include="WRDialer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigSettings.hpp" />
+    <ClInclude Include="PJCallRoboDial.hpp" />
     <ClInclude Include="ServiceFTP.hpp" />
     <ClInclude Include="PJAccount.h" />
     <ClInclude Include="PJCall.h" />
@@ -167,6 +170,7 @@
     <ClInclude Include="ServicePJAccount.h" />
     <ClInclude Include="ServicePJCalls.h" />
     <ClInclude Include="ServicePJEndpoint.h" />
+    <ClInclude Include="ServicePJRoboCalls.h" />
     <ClInclude Include="ServicePJWavPool.h" />
     <ClInclude Include="WApp.h" />
     <ClInclude Include="WAppAD3.hpp" />
@@ -178,6 +182,7 @@
     <ClInclude Include="WMDIParentFrameAD3.hpp" />
     <ClInclude Include="WConfigSettings.hpp" />
     <ClInclude Include="WMsg.hpp" />
+    <ClInclude Include="WRDialer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="AD3.rc" />
