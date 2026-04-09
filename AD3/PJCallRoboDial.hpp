@@ -102,7 +102,7 @@ namespace eg::ad3
 			media.startTransmit(recorder_);
 
 			// 2. Player -> Call audio
-			player_.createPlayer(player_wav_filename_, PJMEDIA_FILE_NO_LOOP);
+			player_.createPlayer(player_wav_filename_, 0);
 			player_.startTransmit(media);
 
 			// 4. Player -> Recorder

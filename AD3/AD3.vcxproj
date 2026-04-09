@@ -151,7 +151,6 @@
     <ClCompile Include="ServicePJEndpoint.cpp" />
     <ClCompile Include="ServicePJRoboCalls.cpp" />
     <ClCompile Include="ServicePJWavPool.cpp" />
-    <ClCompile Include="WAutoDial.cpp" />
     <ClCompile Include="WChildFrame.cpp" />
     <ClCompile Include="WDialer.cpp" />
     <ClCompile Include="WMDIParentFrame.cpp" />
@@ -174,7 +173,6 @@
     <ClInclude Include="ServicePJWavPool.h" />
     <ClInclude Include="WApp.h" />
     <ClInclude Include="WAppAD3.hpp" />
-    <ClInclude Include="WAutoDial.h" />
     <ClInclude Include="WChildFrame.h" />
     <ClInclude Include="WDialer.h" />
     <ClInclude Include="WDialerCommon.hpp" />

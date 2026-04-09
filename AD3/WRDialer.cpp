@@ -631,12 +631,12 @@ namespace eg::ad3
 									return "NOANSWER";
 								}();
 
-							const size_t uploader_contact_id = 0;
+							//const size_t uploader_contact_id = 0;
 
 							stmt.bind(0, &data_.id);
 							stmt.bind(1, &data_.collector_id);
 							stmt.bind(2, remarks.c_str(), remarks.size());
-							stmt.bind(3, &uploader_contact_id);
+							stmt.bind(3, &data_.uploader_contact_id);
 							stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
 							stmt.bind(5, status.c_str(), status.size());
 
@@ -719,17 +719,17 @@ namespace eg::ad3
 	{
 		const auto [in, out] = ServicePJEndpoint::instance().get_in_out_count();
 
-		if (in == 0)
-		{
-			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Can't call because NO MIC is detected.", eg::ad3::ServiceData::Type::ERR);
-			return;
-		}
+		//if (in == 0)
+		//{
+		//	ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Can't call because NO MIC is detected.", eg::ad3::ServiceData::Type::ERR);
+		//	return;
+		//}
 
-		if (out == 0)
-		{
-			ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Can't call because NO SPEAKER is detected.", eg::ad3::ServiceData::Type::ERR);
-			return;
-		}
+		//if (out == 0)
+		//{
+		//	ServiceMsg::instance().log(this->GetTitle().ToStdString(), "Can't call because NO SPEAKER is detected.", eg::ad3::ServiceData::Type::ERR);
+		//	return;
+		//}
 
 		if (data_.file_player.empty())
 		{

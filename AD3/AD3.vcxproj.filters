@@ -45,9 +45,6 @@
     <ClCompile Include="WDialer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WAutoDial.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\Libs\Common\MiniAudioImplem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -108,9 +105,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PJCallManualDial.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WAutoDial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WDialerCommon.hpp">

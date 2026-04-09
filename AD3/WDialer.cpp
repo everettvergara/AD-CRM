@@ -247,7 +247,7 @@ namespace eg::ad3
 				new_button_->Enable();
 				if (browser_mode_)
 				{
-					call_again_button_->Disable();
+					call_again_button_->Enable();
 				}
 				else
 				{
@@ -263,7 +263,7 @@ namespace eg::ad3
 				filter_status_->Enable();
 				remarks_->Disable();
 				new_button_->Disable();
-				call_again_button_->Disable();
+				call_again_button_->Enable();
 			}
 
 			//id_->Disable();
@@ -377,7 +377,7 @@ namespace eg::ad3
 				}
 				else
 				{
-					call_again_button_->Disable();
+					call_again_button_->Enable();
 				}
 			}
 			else
@@ -392,7 +392,7 @@ namespace eg::ad3
 				{
 					call_button_->Enable();
 				}
-				call_again_button_->Disable();
+				call_again_button_->Enable();
 			}
 
 			stop_button_->Disable();
@@ -413,7 +413,7 @@ namespace eg::ad3
 			name_->Disable();
 			remarks_->Disable();
 			new_button_->Disable();
-			call_again_button_->Disable();
+			call_again_button_->Enable();
 			call_button_->Disable();
 		}
 	}
@@ -805,12 +805,12 @@ namespace eg::ad3
 									return "NOANSWER";
 								}();
 
-							const size_t uploader_contact_id = 0;
+							//const size_t uploader_contact_id = data_.uploader_contact_id;
 
 							stmt.bind(0, &data_.id);
 							stmt.bind(1, &data_.collector_id);
 							stmt.bind(2, remarks.c_str(), remarks.size());
-							stmt.bind(3, &uploader_contact_id);
+							stmt.bind(3, &data_.uploader_contact_id);
 							stmt.bind(4, data_.mobile.c_str(), data_.mobile.size());
 							stmt.bind(5, status.c_str(), status.size());
 
