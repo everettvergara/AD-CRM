@@ -966,8 +966,9 @@ namespace eg::ad3
 
 			{
 				nanodbc::statement stmt(conn);
-				prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_get_next_id(?)}"));
+				prepare(stmt, NANODBC_TEXT("{CALL dbo.sp_ad_tr_get_next_id(?, ?)}"));
 				stmt.bind(0, &filter_.selected_status->cache_id);
+				stmt.bind(1, &filter_.selected_status->collector_id);
 
 				nanodbc::result results = nanodbc::execute(stmt);
 
@@ -979,20 +980,20 @@ namespace eg::ad3
 						filter_.selected_status->next_id = filter_.selected_status->min_id;
 
 						//wxMessageBox("No more records to call for this option.", this->GetTitle(), wxOK | wxICON_INFORMATION, this);
-						ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::WARNING);
+						ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option. Close open the AD if you have ran Sync.", eg::ad3::ServiceData::Type::WARNING);
 
 						update_components_from_data_();
 						return;
 					}
 					else
 					{
-						filter_.selected_status->next_id = next_id + 1;
+						filter_.selected_status->next_id = next_id;// +1 no need to +1 since sp already incremented it;
 					}
 				}
 
 				if (filter_.selected_status->next_id > filter_.selected_status->max_id)
 				{
-					ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option.", eg::ad3::ServiceData::Type::WARNING);
+					ServiceMsg::instance().log(this->GetTitle().ToStdString(), "No more records to call for this option. Close open the AD if you have ran Sync.", eg::ad3::ServiceData::Type::WARNING);
 					update_components_from_data_();
 					return;
 				}
@@ -1514,7 +1515,7 @@ namespace eg::ad3
 					filter_.clients.back().campaigns.emplace_back(client_campaign_id);
 				}
 
-				//LOG_II("7");
+				// LOG_II("7");
 
 				if (const auto prio_type_id = results.get<size_t>(5);
 					prio_type_id not_eq last_prio_type_id)

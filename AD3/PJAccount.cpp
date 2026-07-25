@@ -1,6 +1,7 @@
 #include "PJAccount.h"
 
 #include <format>
+#include <thread>
 #include "Common/Log.hpp"
 #include "Common/ServiceCtrlC.h"
 #include "ConfigSettings.hpp"
@@ -26,14 +27,31 @@ namespace eg::ad3
 
 				account_config.regConfig.timeoutSec = settings.server_timeout_secs;
 				account_config.regConfig.registrarUri = std::format(k_pj_sip_server_port_no_format, settings.server_ip, settings.server_port);
-				account_config.regConfig.registerOnAdd = settings.register_on_add;
+				account_config.regConfig.registerOnAdd = false; // settings.register_on_add;
 				account_config.natConfig.udpKaIntervalSec = settings.server_keep_alive_secs;
 				account_config.natConfig.udpKaData = settings.server_keep_alive_data;
 
 				return account_config;
 			}());
 
-		wait_until_registered_or_signal_exit();
+		LOG_II("Before setRegistration");
+
+		try
+		{
+			//this->setRegistration(true);
+			LOG_II("After setRegistration");
+		}
+		catch (const pj::Error& e)
+		{
+			LOG_XX("PJSIP Error: {}", e.info());
+		}
+		catch (...)
+		{
+			LOG_XX("Unknown exception");
+		}
+		LOG_II("After setRegistration");
+
+		//wait_until_registered_or_signal_exit();
 	}
 
 	void PJAccount::wait_until_registered_or_signal_exit()

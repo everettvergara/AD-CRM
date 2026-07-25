@@ -49,10 +49,17 @@ namespace eg::ad3
 				{
 					const auto& info = adm.getDevInfo(i);
 
+					//if (info.name == "Wave mapper")
+					//{
+					//	LOG_II("Wave mapper found - skipping this device.");
+					//	continue;
+					//}
+
 					LOG_II("Dev found: {} {} ", i, info.name);
 
 					if (info.name == k_pj_null_device)
 					{
+						LOG_II("Null device found - skipping this device.");
 						continue;
 					}
 					LOG_II("Opening: {} {} ", i, info.name);

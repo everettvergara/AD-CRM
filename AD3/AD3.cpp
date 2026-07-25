@@ -48,6 +48,8 @@ void shutdown()
 
 int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow)
 {
+	//MessageBoxA(nullptr, "main", "debug", MB_OK);
+
 	try
 	{
 		// App

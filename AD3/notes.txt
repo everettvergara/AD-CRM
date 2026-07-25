@@ -1,0 +1,6 @@
+
+
+2026-06-29
+Fixed a bug that skips a campaign
+
+BUG: Session must expire if user did not logout yestrday or last login is more than 24 hours ago. 

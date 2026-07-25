@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_set>
 #include <mutex>
+#include <functional>
 #include <condition_variable>
 #include <pjsua2.hpp>
 #include "Common/NoCopyMove.hpp"

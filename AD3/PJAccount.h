@@ -3,6 +3,7 @@
 #include <string>
 #include <condition_variable>
 #include <mutex>
+#include <atomic>
 #include <pjsua2.hpp>
 #include "Common/NoCopyMove.hpp"
 
@@ -16,7 +17,7 @@ namespace eg::ad3
 		public pj::Account, public eg::sys::NoCopyMove
 	{
 	public:
-		bool is_registered;
+		std::atomic<bool> is_registered;
 
 		PJAccount(const std::string& sip_id, const std::string& sip_password, pj::TransportId id);
 		void wait_until_registered_or_signal_exit();
